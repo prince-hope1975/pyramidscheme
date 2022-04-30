@@ -1,0 +1,7 @@
+{
+    "files.defaultLanguage": "javascript",
+    "emmet.includeLanguages": {
+        "rsh": "javascript"
+    },
+    "workbench.editor.preferHistoryBasedLanguageDetection": true
+}
