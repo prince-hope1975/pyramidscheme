@@ -70,7 +70,7 @@ export const main = Reach.App(() => {
       (k) => {
         const _ = register(k);
       },
-      (k) => price,
+      (_) => price,
       (h, k) => {
         k(true);
         
