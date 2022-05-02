@@ -18,10 +18,10 @@ export const main = Reach.App(() => {
   });
 
   const S = API("Schemers", {
-    joinPyramid: Fun([UInt], Bool),
+    joinPyramid: Fun([UInt], UInt),
     // withDrawPayout: Fun([], Null),
     timesUp: Fun([], Bool),
-    // printObj : Fun([Data], null)
+    // printObj : Fun([Bool], Null)
   });
 
   init();
@@ -58,18 +58,18 @@ export const main = Reach.App(() => {
     .define(() => {
       const register = (k) => {
         check(k < 50,"Out of range") ;
-        check(participantsInfo[k].children < 2, "Cannot register");
-        
+        check(object[k].children < 2, "Cannot register under this user, They have no available downlines");
         return () => {
+
           const parent = {
-            parent: participantsInfo[k].participantAddr,
+            parent: object[k].participantAddr,
             children: 0,
             participantAddr: this
           };
           const updatedParent = {
-            ...participantsInfo[k], children: participantsInfo[k].children+1
+            ...object[k], children: object[k].children+1
           }
-          const updateParent = participantsInfo.set(k, updatedParent)
+          const updateParent = object.set(k, updatedParent)
           const newArr = updateParent.set(howMany, parent);
           return [keepGoing, howMany + 1, newArr];
         };
@@ -90,7 +90,9 @@ export const main = Reach.App(() => {
       },
       (_) => price,
       (h, k) => {
-        k(true);
+        check(h<50)
+        k(object[h].children);
+        // k(howMany)
         return register(h)();
       }
     )
@@ -98,7 +100,7 @@ export const main = Reach.App(() => {
     .timeout(deadlineBlock, () => {
       const [[], k] = call(S.timesUp);
       k(true);
-      return [false, howMany, participantsInfo];
+      return [false, howMany, object];
     });
   transfer(balance()).to(D);
   commit();

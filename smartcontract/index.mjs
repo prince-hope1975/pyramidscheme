@@ -27,12 +27,12 @@ try {
 console.log("Starting interactions soon with APis");
 const ctcWho = (whoi) => users[whoi].contract(backend, ctcAdmin.getInfo());
 
-const register = async (whoi) => {
+const register = async (whoi, upline) => {
   try {
     const who = users[whoi];
     console.log("Registration of ", stdlib.formatAddress(who));
     const ctc = ctcWho(whoi);
-    const returned = await ctc.apis.Schemers.joinPyramid(whoi);
+    const returned = await ctc.apis.Schemers.joinPyramid(upline);
     console.log(returned);
   } catch (error) {
     console.error(error);
@@ -47,17 +47,18 @@ const willError = async (f) => {
     e = te;
   }
   if (e === false) {
-    throw Error(`Expected to error, but didn't`);
+    console.log(`Expected to error, but didn't`);
+    return
   }
   console.log(`That last call errored and that's okay`);
 };
 console.log("Starting backends...");
-await register(0);
-await willError(()=>register(0))
-await register(1);
-await register(2);
-await register(3);
-await register(4);
+await register(0, 0);
+await register(1, 0);
+// await willError(()=>register(2,0))
+// await willError(()=>register(3, 50))
+await register(2, 0)
+await register(4, 0);
 console.log("Goodbye, Everyone!");
 
 // await Promise.all([
