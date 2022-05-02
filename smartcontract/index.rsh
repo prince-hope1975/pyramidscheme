@@ -5,20 +5,21 @@
 // for each deposit or withdrawal the contract deployer gets 2%
 // once the upline is paid the upline pays the upline an amount
 // the value paid to the upline is dependant 75% of what is recieved
-// once 100 people join then end the program and run away with the rest
+// once 50 people join then end the program and run away with the rest
 
 export const main = Reach.App(() => {
   // This person sets the price
   const D = Participant("Deployer", {
     price: UInt,
-    ready: Fun([], Null),
     // The deadline will be used to determine when the contract
+    ready: Fun([], Null),
     // Execution would end
     deadline: UInt,
   });
 
   const S = API("Schemers", {
     joinPyramid: Fun([UInt], Bool),
+    // withDrawPayout: Fun([], Null),
     timesUp: Fun([], Bool),
     // printObj : Fun([Data], null)
   });
@@ -26,7 +27,6 @@ export const main = Reach.App(() => {
   init();
 
   // Members of the pyramid scheme
-
   D.only(() => {
     const price = declassify(interact.price);
     const deadline = declassify(interact.deadline);
@@ -34,27 +34,44 @@ export const main = Reach.App(() => {
   D.publish(price, deadline);
   commit();
   D.publish();
-
-  const deadlineBlock = relativeTime(deadline);
-  const downLines = new Map(Address, UInt);
-  const upLine = new Map(Address, UInt);
-  const Line = new Map(Object({
-    parent:Address,
-    children : Array(UInt, 2)
+  const participantsInfo = Array.iota(50).map((_) => ({
+    participantAddr: D,
+    parent: D,
+    children: 0,
   }));
 
-  downLines[D] = 0
-  upLine[D] = 0
+  const deadlineBlock = relativeTime(deadline);
+  // const downLines = new Map(Address, UInt);
+  
+  const checkStatement = (addr) => {
+    participantsInfo.mapWithIndex((item, index) => {});
+  };
+  // downLines[D] = 0
+  // upLine[D] = 0
 
   D.interact.ready();
-  const [keepGoing, howMany] = parallelReduce([true, 0])
+  const [keepGoing, howMany, object] = parallelReduce([
+    true,
+    0,
+    participantsInfo,
+  ])
     .define(() => {
-      const register = (index) => {
+      const register = (k) => {
+        check(k < 50,"Out of range") ;
+        check(participantsInfo[k].children < 2, "Cannot register");
+        
         return () => {
-          downLines[this] = 0;
-          // const val = fromSome(SchemeMembers[index], D);
-          // upLine[val] = fromSome(upLine[val], 0) + 1;          
-          return [keepGoing, howMany + 1];
+          const parent = {
+            parent: participantsInfo[k].participantAddr,
+            children: 0,
+            participantAddr: this
+          };
+          const updatedParent = {
+            ...participantsInfo[k], children: participantsInfo[k].children+1
+          }
+          const updateParent = participantsInfo.set(k, updatedParent)
+          const newArr = updateParent.set(howMany, parent);
+          return [keepGoing, howMany + 1, newArr];
         };
       };
       //
@@ -63,8 +80,9 @@ export const main = Reach.App(() => {
         return () => {};
       };
     })
+
     .invariant(balance() == howMany * price)
-    .while(keepGoing)
+    .while(keepGoing && howMany<50)
     .api(
       S.joinPyramid,
       (k) => {
@@ -73,7 +91,6 @@ export const main = Reach.App(() => {
       (_) => price,
       (h, k) => {
         k(true);
-        
         return register(h)();
       }
     )
@@ -81,12 +98,12 @@ export const main = Reach.App(() => {
     .timeout(deadlineBlock, () => {
       const [[], k] = call(S.timesUp);
       k(true);
-      return [false, howMany];
+      return [false, howMany, participantsInfo];
     });
   transfer(balance()).to(D);
   commit();
   exit();
-})
+});
 // .case(PART_EXPR,
 //   (() => ({
 //           when: PUBLISH_WHEN_EXPR,
@@ -96,4 +113,3 @@ export const main = Reach.App(() => {
 //   ((msg) => {
 //     CONSENSUS_EXPR
 //   }))
-

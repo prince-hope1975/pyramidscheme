@@ -38,8 +38,22 @@ const register = async (whoi) => {
     console.error(error);
   }
 };
+const willError = async (f) => {
+  let e;
+  try {
+    await f();
+    e = false;
+  } catch (te) {
+    e = te;
+  }
+  if (e === false) {
+    throw Error(`Expected to error, but didn't`);
+  }
+  console.log(`That last call errored and that's okay`);
+};
 console.log("Starting backends...");
 await register(0);
+await willError(()=>register(0))
 await register(1);
 await register(2);
 await register(3);
