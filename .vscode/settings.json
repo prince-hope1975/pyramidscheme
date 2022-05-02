@@ -1,7 +1,6 @@
 {
-    "files.defaultLanguage": "javascript",
-    "emmet.includeLanguages": {
-        "rsh": "javascript"
+    "files.associations": {
+        "*.rsh": "javascript"
     },
-    "workbench.editor.preferHistoryBasedLanguageDetection": true
+    "javascript.suggest.completeFunctionCalls": true
 }
