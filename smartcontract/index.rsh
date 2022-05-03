@@ -18,10 +18,10 @@ export const main = Reach.App(() => {
   });
 
   const S = API("Schemers", {
-    joinPyramid: Fun([UInt], UInt),
+    joinPyramid: Fun([Address], Bool),
     // withDrawPayout: Fun([], Null),
     timesUp: Fun([], Bool),
-    // printObj : Fun([Bool], Null)
+    checkBalance: Fun([UInt], UInt),
   });
 
   init();
@@ -42,7 +42,7 @@ export const main = Reach.App(() => {
 
   const deadlineBlock = relativeTime(deadline);
   // const downLines = new Map(Address, UInt);
-  
+
   const checkStatement = (addr) => {
     participantsInfo.mapWithIndex((item, index) => {});
   };
@@ -50,39 +50,58 @@ export const main = Reach.App(() => {
   // upLine[D] = 0
 
   D.interact.ready();
-  const [keepGoing, howMany, object] = parallelReduce([
-    true,
-    0,
-    participantsInfo,
-  ])
+  const users = new Set();
+  const numChildren = new Map(Address, UInt);
+  const parentMap = new Map(Address, Address);
+  const allocatedPrice = new Map(Address, UInt);
+  users.insert(D);
+  parentMap[D] = D;
+  allocatedPrice[D] = 0;
+  const [keepGoing, howMany] = parallelReduce([true, 0])
     .define(() => {
       const register = (k) => {
-        check(k < 50,"Out of range") ;
-        check(object[k].children < 2, "Cannot register under this user, They have no available downlines");
-        return () => {
+        check(
+          (users.member(k)),
+          "The person you are trying to register under is not registered"
+        );
+        // check((users.member(this)), "Already a member sorry");
+        check(
+          fromMaybe(
+            numChildren[k],
+            () => 0,
+            (x) => x
+          ) < 2,
+          "No empty slots for this user"
+        );
 
-          const parent = {
-            parent: object[k].participantAddr,
-            children: 0,
-            participantAddr: this
-          };
-          const updatedParent = {
-            ...object[k], children: object[k].children+1
-          }
-          const updateParent = object.set(k, updatedParent)
-          const newArr = updateParent.set(howMany, parent);
-          return [keepGoing, howMany + 1, newArr];
+        return () => {
+          numChildren[k] =
+            fromMaybe(
+              numChildren[k],
+              () => 0,
+              (x) => x
+            ) + 1;
+          parentMap[this] = k;
+          users.insert(this);
+          allocatedPrice[this] = price;
+          return [keepGoing, howMany + 1];
         };
       };
       //
-      const sendToUpline = (who) => {
-        check(SchemeMembers.member(who), "Is a member");
-        return () => {};
+      const userBalance = (k) => {
+        check(users.member(this), "Not a member");
+        return () => {
+          k(fromMaybe(allocatedPrice[this],()=>0, (x)=>x));
+         
+        };
       };
+      const withdrawPayout =()=>{
+        check(!(this == D), "You have no uplines")
+      }
     })
 
     .invariant(balance() == howMany * price)
-    .while(keepGoing && howMany<50)
+    .while(keepGoing && howMany < 50)
     .api(
       S.joinPyramid,
       (k) => {
@@ -90,17 +109,23 @@ export const main = Reach.App(() => {
       },
       (_) => price,
       (h, k) => {
-        check(h<50)
-        k(object[h].children);
-        // k(howMany)
+        k(true);
         return register(h)();
       }
     )
-    // .api()
+    .api(
+      S.checkBalance,
+      (k) => {const _ = userBalance(k);},
+      (s) => 0,
+      (s,k)=>{
+        userBalance(k)()
+        return [keepGoing, howMany];
+      }
+    )
     .timeout(deadlineBlock, () => {
       const [[], k] = call(S.timesUp);
       k(true);
-      return [false, howMany, object];
+      return [false, howMany];
     });
   transfer(balance()).to(D);
   commit();
