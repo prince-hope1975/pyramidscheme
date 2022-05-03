@@ -5,7 +5,6 @@
 // for each deposit or withdrawal the contract deployer gets 2%
 // once the upline is paid the upline pays the upline an amount
 // the value paid to the upline is dependant 75% of what is recieved
-// once 50 people join then end the program and run away with the rest
 
 export const main = Reach.App(() => {
   // This person sets the price
@@ -34,37 +33,27 @@ export const main = Reach.App(() => {
   D.publish(price, deadline);
   commit();
   D.publish();
-  const participantsInfo = Array.iota(50).map((_) => ({
-    participantAddr: D,
-    parent: D,
-    children: 0,
-  }));
 
   const deadlineBlock = relativeTime(deadline);
-  // const downLines = new Map(Address, UInt);
-
-  const checkStatement = (addr) => {
-    participantsInfo.mapWithIndex((item, index) => {});
-  };
-  // downLines[D] = 0
-  // upLine[D] = 0
 
   D.interact.ready();
-  const users = new Set();
+
+  const users = new Map(Address,Address);
   const numChildren = new Map(Address, UInt);
   const parentMap = new Map(Address, Address);
   const allocatedPrice = new Map(Address, UInt);
-  users.insert(D);
+  users[D] =D;
   parentMap[D] = D;
   allocatedPrice[D] = 0;
   const [keepGoing, howMany] = parallelReduce([true, 0])
     .define(() => {
       const register = (k) => {
+        check(this == D, "cannot register as deployer")
         check(
-          (users.member(k)),
+          (fromMaybe(users[k],()=>D, (x)=>x) == D),
           "The person you are trying to register under is not registered"
         );
-        // check((users.member(this)), "Already a member sorry");
+        check((fromMaybe(users[this], ()=>D, (x)=>x)== this), "Already a member sorry");
         check(
           fromMaybe(
             numChildren[k],
@@ -82,14 +71,14 @@ export const main = Reach.App(() => {
               (x) => x
             ) + 1;
           parentMap[this] = k;
-          users.insert(this);
+          users[this]= this;
           allocatedPrice[this] = price;
           return [keepGoing, howMany + 1];
         };
       };
       //
       const userBalance = (k) => {
-        check(users.member(this), "Not a member");
+        check(fromMaybe(users[this], ()=>D, (x)=>x)==D, "Not a member");
         return () => {
           k(fromMaybe(allocatedPrice[this],()=>0, (x)=>x));
          
@@ -97,6 +86,9 @@ export const main = Reach.App(() => {
       };
       const withdrawPayout =()=>{
         check(!(this == D), "You have no uplines")
+        transfer(allocatedPrice[this]*.45).to(this)
+        allocatedPrice[parentMap[this]] += (allocatedPrice[this] * .55)
+        allocatedPrice[this] = 0
       }
     })
 

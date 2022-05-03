@@ -69,6 +69,7 @@ console.log("Starting backends...");
 
 await register(accBob, accAdmin);
 await register(one, accAdmin);
+await register(one, three);
 await register(two, accBob);
 await register(three, one);
 // await register(four, one);
