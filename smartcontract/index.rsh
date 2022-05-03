@@ -21,6 +21,7 @@ export const main = Reach.App(() => {
     // withDrawPayout: Fun([], Null),
     timesUp: Fun([], Bool),
     checkBalance: Fun([UInt], UInt),
+    withdraw: Fun([], Bool),
   });
 
   init();
@@ -38,22 +39,33 @@ export const main = Reach.App(() => {
 
   D.interact.ready();
 
-  const users = new Map(Address,Address);
+  const users = new Map(Address, Address);
   const numChildren = new Map(Address, UInt);
   const parentMap = new Map(Address, Address);
   const allocatedPrice = new Map(Address, UInt);
-  users[D] =D;
+  users[D] = D;
   parentMap[D] = D;
   allocatedPrice[D] = 0;
-  const [keepGoing, howMany] = parallelReduce([true, 0])
+  const [keepGoing, howMany, total] = parallelReduce([true, 0, 0])
     .define(() => {
       const register = (k) => {
-        check(this == D, "cannot register as deployer")
+        check(this == D, "cannot register as deployer");
         check(
-          (fromMaybe(users[k],()=>D, (x)=>x) == D),
+          fromMaybe(
+            users[k],
+            () => D,
+            (x) => x
+          ) == D,
           "The person you are trying to register under is not registered"
         );
-        check((fromMaybe(users[this], ()=>D, (x)=>x)== this), "Already a member sorry");
+        check(
+          fromMaybe(
+            users[this],
+            () => D,
+            (x) => x
+          ) == this,
+          "Already a member sorry"
+        );
         check(
           fromMaybe(
             numChildren[k],
@@ -71,29 +83,68 @@ export const main = Reach.App(() => {
               (x) => x
             ) + 1;
           parentMap[this] = k;
-          users[this]= this;
+          users[this] = this;
           allocatedPrice[this] = price;
-          return [keepGoing, howMany + 1];
+          return [keepGoing, howMany + 1, total + price];
         };
       };
       //
       const userBalance = (k) => {
-        check(fromMaybe(users[this], ()=>D, (x)=>x)==D, "Not a member");
+        check(
+          fromMaybe(
+            users[this],
+            () => D,
+            (x) => x
+          ) == D,
+          "Not a member"
+        );
         return () => {
-          k(fromMaybe(allocatedPrice[this],()=>0, (x)=>x));
-         
+          k(
+            fromMaybe(
+              allocatedPrice[this],
+              () => 0,
+              (x) => x
+            )
+          );
         };
       };
-      const withdrawPayout =()=>{
-        check(!(this == D), "You have no uplines")
-        transfer(allocatedPrice[this]*.45).to(this)
-        allocatedPrice[parentMap[this]] += (allocatedPrice[this] * .55)
-        allocatedPrice[this] = 0
-      }
+      const withdrawPayout = () => {
+        check(!(this == D), "You have no uplines");
+        return () => {
+          const tfAmt = fromMaybe(
+            allocatedPrice[this],
+            () => 0,
+            (x) => x
+          );
+          const parentAmt = fromMaybe(
+            allocatedPrice[
+              fromMaybe(
+                parentMap[this],
+                () => D,
+                (x) => x
+              )
+            ],
+            () => 0,
+            (x) => x
+          );
+          transfer((tfAmt * 45) / 100).to(this);
+          allocatedPrice[
+            fromMaybe(
+              parentMap[this],
+              () => D,
+              (x) => x
+            )
+          ] = parentAmt + (tfAmt * 55) / 100;
+          allocatedPrice[this] = 0;
+
+          const final = total - (tfAmt * 45) / 100;
+          return [keepGoing, howMany, final];
+        };
+      };
     })
 
-    .invariant(balance() == howMany * price)
-    .while(keepGoing && howMany < 50)
+    .invariant(balance() == total)
+    .while(keepGoing)
     .api(
       S.joinPyramid,
       (k) => {
@@ -107,17 +158,32 @@ export const main = Reach.App(() => {
     )
     .api(
       S.checkBalance,
-      (k) => {const _ = userBalance(k);},
+      (k) => {
+        const _ = userBalance(k);
+      },
       (s) => 0,
-      (s,k)=>{
-        userBalance(k)()
-        return [keepGoing, howMany];
+      (s, k) => {
+        userBalance(k)();
+        return [keepGoing, howMany, total]; 
+
+      }
+    )
+    .api(
+      S.withdraw,
+      () => {
+        const _ = withdrawPayout();
+      },
+      () => 0,
+      (k) => {
+        k(true)
+       return withdrawPayout()();
+
       }
     )
     .timeout(deadlineBlock, () => {
       const [[], k] = call(S.timesUp);
       k(true);
-      return [false, howMany];
+      return [false, howMany, total];
     });
   transfer(balance()).to(D);
   commit();
