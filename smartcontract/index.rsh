@@ -20,7 +20,7 @@ export const main = Reach.App(() => {
     joinPyramid: Fun([Address], Bool),
     // withDrawPayout: Fun([], Null),
     timesUp: Fun([], Bool),
-    checkBalance: Fun([UInt], UInt),
+    checkBalance: Fun([], UInt),
     withdraw: Fun([], Bool),
   });
 
@@ -43,6 +43,7 @@ export const main = Reach.App(() => {
   const numChildren = new Map(Address, UInt);
   const parentMap = new Map(Address, Address);
   const allocatedPrice = new Map(Address, UInt);
+ 
   users[D] = D;
   parentMap[D] = D;
   allocatedPrice[D] = 0;
@@ -98,18 +99,28 @@ export const main = Reach.App(() => {
           ) == D,
           "Not a member"
         );
+        check((this == D),"Unable to check balance")
         return () => {
+          const prices = fromMaybe(
+            allocatedPrice[this],
+            () => 0,
+            (x) => x
+          );
           k(
-            fromMaybe(
-              allocatedPrice[this],
-              () => 0,
-              (x) => x
-            )
+            prices
           );
         };
       };
       const withdrawPayout = () => {
-        check(!(this == D), "You have no uplines");
+        check((this == D), "You have no uplines");
+        check(
+          fromMaybe(
+            allocatedPrice[this],
+            () => 0,
+            (x) => x
+          ) == 0,
+          "Insufficient Balance"
+        );
         return () => {
           const tfAmt = fromMaybe(
             allocatedPrice[this],
@@ -127,17 +138,20 @@ export const main = Reach.App(() => {
             () => 0,
             (x) => x
           );
-          transfer((tfAmt * 45) / 100).to(this);
+          const thirtyPercent =(tfAmt * 30) / 100
+          const sixtyPercent =((tfAmt * 60) / 100)
+          transfer(thirtyPercent).to(this);
+          
           allocatedPrice[
             fromMaybe(
               parentMap[this],
               () => D,
               (x) => x
             )
-          ] = parentAmt + (tfAmt * 55) / 100;
+          ] = parentAmt + sixtyPercent;
           allocatedPrice[this] = 0;
 
-          const final = total - (tfAmt * 45) / 100;
+          const final = total - thirtyPercent;
           return [keepGoing, howMany, final];
         };
       };
@@ -158,11 +172,12 @@ export const main = Reach.App(() => {
     )
     .api(
       S.checkBalance,
-      (k) => {
-        const _ = userBalance(k);
+      () => {
+        const _ = userBalance((x)=>x);
       },
-      (s) => 0,
-      (s, k) => {
+      () => 0,
+      ( k) => {
+        
         userBalance(k)();
         return [keepGoing, howMany, total]; 
 
