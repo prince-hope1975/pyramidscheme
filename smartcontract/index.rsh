@@ -20,7 +20,7 @@ export const main = Reach.App(() => {
     joinPyramid: Fun([Address], Address),
     // withDrawPayout: Fun([], Null),
     timesUp: Fun([], Bool),
-    // checkBalance: Fun([], UInt),
+    checkBalance: Fun([], UInt),
     withdraw: Fun([], Address),
   });
 
@@ -29,6 +29,7 @@ export const main = Reach.App(() => {
   // Members of the pyramid scheme
   D.only(() => {
     const price = declassify(interact.price);
+    check(price < 20)
     const deadline = declassify(interact.deadline);
   });
   D.publish(price, deadline);
@@ -41,12 +42,13 @@ export const main = Reach.App(() => {
 
   const users = new Map(Address, Address);
   const numChildren = new Map(Address, UInt);
+  const totalKids = new Map(Address, UInt);
   const parentMap = new Map(Address, Address);
-  const allocatedPrice = new Map(Address, UInt);
+  const allocatedAmount = new Map(Address, UInt);
 
   users[D] = D;
   parentMap[D] = D;
-  allocatedPrice[D] = 0;
+  allocatedAmount[D] = 0;
   const [keepGoing, howMany, total] = parallelReduce([true, 0, 0])
     .define(() => {
       const register = (k, that) => {
@@ -62,46 +64,42 @@ export const main = Reach.App(() => {
           numChildren[k] = fromSome(numChildren[k], 0) + 1;
           parentMap[that] = k;
           users[that] = that;
-          allocatedPrice[that] = price;
+          totalKids[k] = fromSome(totalKids[that], 0) + 1;
           return [keepGoing, howMany + 1, total + price];
         };
       };
       //
-      // const userBalance = (that) => {
-      //   check(fromSome(users[that], D) == D, "Not a member");
+      const userBalance = (that) => {
+        check(fromSome(users[that], D) == D, "Not a member");
 
-      //   check(this == D, "Unable to check balance");
-      //   return () => {
-      //     const val = fromSome(allocatedPrice[that], 0);
-      //     // k(this);
-      //   };
-      // };
+        check(this == D, "Unable to check balance");
+        return () => {
+          const val = fromSome(allocatedAmount[that], 0);
+        };
+      };
       const withdrawPayout = (that) => {
         check(!(that == D), "You have no uplines");
         check(
-          !(fromSome(allocatedPrice[that], 0) == 0),
+          !(fromSome(allocatedAmount[that], 0) == 0),
           "Insufficient Balance"
+          );
+         
+          // netBalance()
+        check(
+          fromSome(numChildren[fromSome(parentMap[that],D)], 0) > 2,
+          "Need at least two down lines"
         );
-        return () => {
-         const tfAmt = fromMaybe(
-           allocatedPrice[that],
-           () => 0,
-           (x) => x
-         );
-         const parentAmt = fromSome(
-           allocatedPrice[fromSome(parentMap[that], D)],
-           0
-         );
-         const thirtyPercent = (tfAmt * 30) / 100;
-         const sixtyPercent = (tfAmt * 60) / 100;
-         transfer(0).to(that);
 
-         allocatedPrice[fromSome(parentMap[that], D)] =
-           parentAmt + sixtyPercent;
-         allocatedPrice[that] = 0;
-        // //  k(that);
-         const final = total - thirtyPercent;
-         return [keepGoing, howMany, total];
+          // check(amount <= 0, "Check")
+          return () => {
+          const amount = (fromMaybe(totalKids[that],()=> 0, (x)=>(x * 20 * 30) / 100) );
+          check(balance() >=amount,"Balance Empty")
+          
+          transfer(amount).to(that);
+          totalKids[that] = 0;
+
+          const final = total - amount;
+          return [keepGoing, howMany, final];
         };
       };
     })
@@ -119,17 +117,18 @@ export const main = Reach.App(() => {
         return register(h, this)();
       }
     )
-    // .api(
-    //   S.checkBalance,
-    //   () => {
-    //     const _ = userBalance(this);
-    //   },
-    //   () => 0,
-    //   (k) => {
-    //     k(fromSome(allocatedPrice[this], 0));
-    //     return [keepGoing, howMany, total];
-    //   }
-    // )
+    .api(
+      S.checkBalance,
+      () => {
+        const _ = userBalance(this);
+      },
+      () => 0,
+      (k) => {
+        const amount  = fromSome(totalKids[this], 0) * price * 30/100
+        k(amount);
+        return [keepGoing, howMany, total];
+      }
+    )
     .api(
       S.withdraw,
       () => {
@@ -137,8 +136,8 @@ export const main = Reach.App(() => {
       },
       () => 0,
       (k) => {
-        k(this)
-       return withdrawPayout(this)();
+        k(this);
+        return withdrawPayout(this)();
       }
     )
     .timeout(deadlineBlock, () => {
