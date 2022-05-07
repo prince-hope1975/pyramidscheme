@@ -20,8 +20,8 @@ export const main = Reach.App(() => {
     joinPyramid: Fun([Address], Address),
     // withDrawPayout: Fun([], Null),
     timesUp: Fun([], Bool),
-    checkBalance: Fun([], UInt),
-    withdraw: Fun([], Bool),
+    // checkBalance: Fun([], UInt),
+    withdraw: Fun([], Address),
   });
 
   init();
@@ -51,10 +51,10 @@ export const main = Reach.App(() => {
     .define(() => {
       const register = (k, that) => {
         check(!(that == D), "cannot register as deployer");
-        check(
-          fromSome(users[k], D) == D,
-          "The person you are trying to register under is not registered"
-        );
+        // check(
+        //   (fromSome(users[k], D) == D),
+        //   "The person you are trying to register under is not registered"
+        // );
         check(!(fromSome(users[that], D) == that), "Already a member sorry");
         check(fromSome(numChildren[k], 0) < 2, "No empty slots for that user");
 
@@ -67,57 +67,41 @@ export const main = Reach.App(() => {
         };
       };
       //
-      const userBalance = () => {
-        check(fromSome(users[this], D) == D, "Not a member");
+      // const userBalance = (that) => {
+      //   check(fromSome(users[that], D) == D, "Not a member");
 
-        check(this == D, "Unable to check balance");
-        return () => {
-          const val = fromSome(allocatedPrice[this], 0);
-          // k(this);
-        };
-      };
-      const withdrawPayout = () => {
-        check(this == D, "You have no uplines");
+      //   check(this == D, "Unable to check balance");
+      //   return () => {
+      //     const val = fromSome(allocatedPrice[that], 0);
+      //     // k(this);
+      //   };
+      // };
+      const withdrawPayout = (that) => {
+        check(!(that == D), "You have no uplines");
         check(
-          fromMaybe(
-            allocatedPrice[this],
-            () => 0,
-            (x) => x
-          ) == 0,
+          !(fromSome(allocatedPrice[that], 0) == 0),
           "Insufficient Balance"
         );
         return () => {
-          const tfAmt = fromMaybe(
-            allocatedPrice[this],
-            () => 0,
-            (x) => x
-          );
-          const parentAmt = fromMaybe(
-            allocatedPrice[
-              fromMaybe(
-                parentMap[this],
-                () => D,
-                (x) => x
-              )
-            ],
-            () => 0,
-            (x) => x
-          );
-          const thirtyPercent = (tfAmt * 30) / 100;
-          const sixtyPercent = (tfAmt * 60) / 100;
-          transfer(thirtyPercent).to(this);
+         const tfAmt = fromMaybe(
+           allocatedPrice[that],
+           () => 0,
+           (x) => x
+         );
+         const parentAmt = fromSome(
+           allocatedPrice[fromSome(parentMap[that], D)],
+           0
+         );
+         const thirtyPercent = (tfAmt * 30) / 100;
+         const sixtyPercent = (tfAmt * 60) / 100;
+         transfer(0).to(that);
 
-          allocatedPrice[
-            fromMaybe(
-              parentMap[this],
-              () => D,
-              (x) => x
-            )
-          ] = parentAmt + sixtyPercent;
-          allocatedPrice[this] = 0;
-
-          const final = total - thirtyPercent;
-          return [keepGoing, howMany, final];
+         allocatedPrice[fromSome(parentMap[that], D)] =
+           parentAmt + sixtyPercent;
+         allocatedPrice[that] = 0;
+        // //  k(that);
+         const final = total - thirtyPercent;
+         return [keepGoing, howMany, total];
         };
       };
     })
@@ -134,27 +118,27 @@ export const main = Reach.App(() => {
         k(this);
         return register(h, this)();
       }
-      )
-      .api(
-        S.checkBalance,
-        () => {
-          const _ = userBalance();
-        },
-        () => 0,
-        (k) => {
-         k(fromSome(allocatedPrice[this], 0))
-          return [keepGoing, howMany, total];
-        }
-      )
+    )
+    // .api(
+    //   S.checkBalance,
+    //   () => {
+    //     const _ = userBalance(this);
+    //   },
+    //   () => 0,
+    //   (k) => {
+    //     k(fromSome(allocatedPrice[this], 0));
+    //     return [keepGoing, howMany, total];
+    //   }
+    // )
     .api(
       S.withdraw,
       () => {
-        const _ = withdrawPayout();
+        const _ = withdrawPayout(this);
       },
       () => 0,
       (k) => {
-        k(true);
-        return withdrawPayout()();
+        k(this)
+       return withdrawPayout(this)();
       }
     )
     .timeout(deadlineBlock, () => {

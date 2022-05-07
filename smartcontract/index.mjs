@@ -69,10 +69,10 @@ const getContractBalance = async (whoi) => {
       // stdlib.formatAddress(address)
       ();
     console.log(
-      "\nBalance",
+      "\nBalance in contract",
       stdlib.formatCurrency(accc),
-      "\nAddress from frontend",
-      stdlib.formatAddress(whoi),
+      "\nBalance in wallet",
+      stdlib.formatCurrency(await stdlib.balanceOf(whoi)),
       "\n"
     );
   } catch (error) {
@@ -80,16 +80,39 @@ const getContractBalance = async (whoi) => {
   }
 };
 
+const Withdraw = async (whoi) => {
+  try {
+    const ctc = whoi.contract(backend, ctcAdmin.getInfo());
+    const accc = await ctc.apis.Schemers
+      .withdraw
+      // stdlib.formatAddress(address)
+      ();
+    console.log(
+      "\Address in contract",
+      stdlib.formatAddress(accc),
+      "\Address in wallet",
+      stdlib.formatAddress((whoi)),
+      "\n"
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
 console.log("Starting backends...");
 
 await register(accBob, accAdmin);
 await register(four, accAdmin);
+await register(two, accBob);
+await register(five, accBob);
 // // await register(one, three);
 // await register(two, accBob);
-
+await getContractBalance(accBob);
+await withdraw(accBob)
+await getContractBalance(accBob);
 // await register(three, accBob);
 await getContractBalance(accAdmin);
-await getContractBalance(accBob);
 await getContractBalance(four);
 await getContractBalance(five);
 console.log(await stdlib.formatCurrency(await stdlib.balanceOf(five)));
