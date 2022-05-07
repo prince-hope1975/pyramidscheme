@@ -97,14 +97,3 @@ await balance(five);
 
 // await register(4);
 console.log("Goodbye, Everyone!");
-
-// await Promise.all([
-//   backend.Alice(ctcAdmin, {
-//     ...stdlib.hasRandom,
-//     // implement Alice's interact object here
-//   }),
-//   backend.Bob(ctcBob, {
-//     ...stdlib.hasRandom,
-//     // implement Bob's interact object here
-//   }),
-// ]);

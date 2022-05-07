@@ -101,13 +101,14 @@ export const main = Reach.App(() => {
         );
         check((this == D),"Unable to check balance")
         return () => {
+          const val = fromSome(allocatedPrice[this], 0)
           const prices = fromMaybe(
             allocatedPrice[this],
             () => 0,
             (x) => x
           );
           k(
-            prices
+            val
           );
         };
       };
