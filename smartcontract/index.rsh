@@ -6,6 +6,8 @@
 // once the upline is paid the upline pays the upline an amount
 // the value paid to the upline is dependant 75% of what is recieved
 
+const returnTheGreater=(x,y)=>x>y?y:x
+
 export const main = Reach.App(() => {
   // This person sets the price
   const D = Participant("Deployer", {
@@ -21,18 +23,18 @@ export const main = Reach.App(() => {
     // withDrawPayout: Fun([], Null),
     timesUp: Fun([], Bool),
     checkBalance: Fun([], UInt),
-    withdraw: Fun([], Address),
+    withdraw: Fun([], UInt),
   });
 
   init();
-
+const price =20
   // Members of the pyramid scheme
   D.only(() => {
-    const price = declassify(interact.price);
-    check(price < 20)
+    // const price = declassify(interact.price);
+    // check(price <= 20,"Price must be 20");
     const deadline = declassify(interact.deadline);
   });
-  D.publish(price, deadline);
+  D.publish( deadline);
   commit();
   D.publish();
 
@@ -64,39 +66,46 @@ export const main = Reach.App(() => {
           numChildren[k] = fromSome(numChildren[k], 0) + 1;
           parentMap[that] = k;
           users[that] = that;
-          totalKids[k] = fromSome(totalKids[that], 0) + 1;
+          totalKids[k] = fromSome(totalKids[k], 0) + 1;
           return [keepGoing, howMany + 1, total + price];
         };
       };
       //
       const userBalance = (that) => {
-        check(fromSome(users[that], D) == D, "Not a member");
+        check(!(fromSome(users[that], D) == D), "Not a member");
 
-        check(this == D, "Unable to check balance");
+        check(!(that == D), "Unable to check balance");
         return () => {
           const val = fromSome(allocatedAmount[that], 0);
         };
       };
-      const withdrawPayout = (that) => {
+      const withdrawPayout = (that, k) => {
         check(!(that == D), "You have no uplines");
         check(
           !(fromSome(allocatedAmount[that], 0) == 0),
           "Insufficient Balance"
-          );
-         
-          // netBalance()
-        check(
-          fromSome(numChildren[fromSome(parentMap[that],D)], 0) > 2,
-          "Need at least two down lines"
         );
 
+        // netBalance()
+        check(
+          fromSome(numChildren[fromSome(parentMap[that], D)], 0) > 2,
+          "Need at least two down lines"
+        );
+        check(balance() > price);
+        return () => {
+          const amt = fromMaybe(
+            totalKids[that],
+            () => 0,
+            (x) => (x * price * 30) / 100
+          );
+          const amount = returnTheGreater(balance(),amt)
+          check(balance() >= amount, "Balance Empty");
+            
           // check(amount <= 0, "Check")
-          return () => {
-          const amount = (fromMaybe(totalKids[that],()=> 0, (x)=>(x * 20 * 30) / 100) );
-          check(balance() >=amount,"Balance Empty")
-          
+          k(amount);
           transfer(amount).to(that);
           totalKids[that] = 0;
+          totalKids[this] = fromSome(totalKids[this], 0);
 
           const final = total - amount;
           return [keepGoing, howMany, final];
@@ -124,7 +133,7 @@ export const main = Reach.App(() => {
       },
       () => 0,
       (k) => {
-        const amount  = fromSome(totalKids[this], 0) * price * 30/100
+        const amount = (fromSome(totalKids[this], 0)) //* price * 30) / 100;
         k(amount);
         return [keepGoing, howMany, total];
       }
@@ -132,12 +141,12 @@ export const main = Reach.App(() => {
     .api(
       S.withdraw,
       () => {
-        const _ = withdrawPayout(this);
+        const _ = withdrawPayout(this, () => 0);
       },
       () => 0,
       (k) => {
-        k(this);
-        return withdrawPayout(this)();
+        // k(this);
+        return withdrawPayout(this, k)();
       }
     )
     .timeout(deadlineBlock, () => {

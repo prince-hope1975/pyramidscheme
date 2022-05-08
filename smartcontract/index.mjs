@@ -70,7 +70,7 @@ const getContractBalance = async (whoi) => {
       ();
     console.log(
       "\nBalance in contract",
-      stdlib.formatCurrency(accc),
+      stdlib.bigNumberToNumber(accc), 
       "\nBalance in wallet",
       stdlib.formatCurrency(await stdlib.balanceOf(whoi)),
       "\n"
@@ -106,19 +106,18 @@ await register(accBob, accAdmin);
 await register(four, accAdmin);
 await register(two, accBob);
 await register(five, accBob);
-// // await register(one, three);
+// await register(one, accBob);
+
 // await register(two, accBob);
 await getContractBalance(accBob);
 await withdraw(accBob)
 await getContractBalance(accBob);
 // await register(three, accBob);
-await getContractBalance(accAdmin);
-await getContractBalance(four);
-await getContractBalance(five);
-console.log(await stdlib.formatCurrency(await stdlib.balanceOf(five)));
-console.log(await stdlib.formatCurrency(await stdlib.balanceOf(six)));
-console.log(await stdlib.formatCurrency(await stdlib.balanceOf(five)));
-// await register(four, one);
+// await getContractBalance(accAdmin);
+// await getContractBalance(four);
+// await getContractBalance(five);
+// console.log(await stdlib.formatCurrency(await stdlib.balanceOf(five)));
+// console.log(await stdlib.formatCurrency(await stdlib.balanceOf(six)));
+// console.log(await stdlib.formatCurrency(await stdlib.balanceOf(five)));
 
-// await register(4);
 console.log("Goodbye, Everyone!");
