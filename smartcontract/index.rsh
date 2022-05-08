@@ -6,7 +6,7 @@
 // once the upline is paid the upline pays the upline an amount
 // the value paid to the upline is dependant 75% of what is recieved
 
-const returnTheGreater=(x,y)=>x>y?y:x
+const returnTheGreater = (x, y) => (x > y ? y : x);
 
 export const main = Reach.App(() => {
   // This person sets the price
@@ -27,14 +27,14 @@ export const main = Reach.App(() => {
   });
 
   init();
-const price =20
+  // const price = 20;
   // Members of the pyramid scheme
   D.only(() => {
-    // const price = declassify(interact.price);
+    const price = declassify(interact.price);
     // check(price <= 20,"Price must be 20");
     const deadline = declassify(interact.deadline);
   });
-  D.publish( deadline);
+  D.publish(price,deadline);
   commit();
   D.publish();
 
@@ -55,10 +55,6 @@ const price =20
     .define(() => {
       const register = (k, that) => {
         check(!(that == D), "cannot register as deployer");
-        // check(
-        //   (fromSome(users[k], D) == D),
-        //   "The person you are trying to register under is not registered"
-        // );
         check(!(fromSome(users[that], D) == that), "Already a member sorry");
         check(fromSome(numChildren[k], 0) < 2, "No empty slots for that user");
 
@@ -67,6 +63,8 @@ const price =20
           parentMap[that] = k;
           users[that] = that;
           totalKids[k] = fromSome(totalKids[k], 0) + 1;
+          allocatedAmount[that] = 0;
+          allocatedAmount[k] = fromSome(allocatedAmount[k], 0) + price;
           return [keepGoing, howMany + 1, total + price];
         };
       };
@@ -88,24 +86,27 @@ const price =20
 
         // netBalance()
         check(
-          fromSome(numChildren[fromSome(parentMap[that], D)], 0) > 2,
+          fromSome(numChildren[fromSome(parentMap[that], D)], 0) >= 2,
           "Need at least two down lines"
         );
         check(balance() > price);
         return () => {
           const amt = fromMaybe(
-            totalKids[that],
+            allocatedAmount[that],
             () => 0,
-            (x) => (x * price * 30) / 100
+            (x) => (x * 30) / 100
           );
-          const amount = returnTheGreater(balance(),amt)
+          const amount = returnTheGreater(balance(), amt);
           check(balance() >= amount, "Balance Empty");
-            
+
           // check(amount <= 0, "Check")
           k(amount);
           transfer(amount).to(that);
-          totalKids[that] = 0;
-          totalKids[this] = fromSome(totalKids[this], 0);
+          allocatedAmount[fromSome(parentMap[that], D)] =
+            fromSome(allocatedAmount[fromSome(parentMap[that], D)], 0) +
+            amount * 2;
+          allocatedAmount[that] = 0;
+          allocatedAmount[this] = fromSome(totalKids[this], 0);
 
           const final = total - amount;
           return [keepGoing, howMany, final];
@@ -133,7 +134,7 @@ const price =20
       },
       () => 0,
       (k) => {
-        const amount = (fromSome(totalKids[this], 0)) //* price * 30) / 100;
+        const amount = fromSome(allocatedAmount[this], 0); //* price * 30) / 100;
         k(amount);
         return [keepGoing, howMany, total];
       }

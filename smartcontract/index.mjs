@@ -3,9 +3,9 @@ import * as backend from "./build/index.main.mjs";
 const stdlib = loadStdlib(process.env);
 
 const startingBalance = stdlib.parseCurrency(100);
-const users = await stdlib.newTestAccounts(6, startingBalance);
+const users = await stdlib.newTestAccounts(10, startingBalance);
 const deadline = stdlib.connector === "CFX" ? 500 : 250;
-const [one, two, three, four, five, six] = users;
+const [one, two, three, four, five, six, seven , eight, nine, ten] = users;
 
 const [accAdmin, accBob] = await stdlib.newTestAccounts(2, startingBalance);
 console.log("Hello admin and Participants!");
@@ -41,7 +41,7 @@ const register = async (whoi, address) => {
 
       console.log(returned);
     } else {
-      console.log("Acc ", 20);
+      console.log("Acc ", 0);
       const ctc = whoi.contract(backend, ctcAdmin.getInfo());
       const accc = await ctc.apis.Schemers.joinPyramid(
         stdlib.formatAddress(address)
@@ -70,7 +70,7 @@ const getContractBalance = async (whoi) => {
       ();
     console.log(
       "\nBalance in contract",
-      stdlib.bigNumberToNumber(accc), 
+      (accc), 
       "\nBalance in wallet",
       stdlib.formatCurrency(await stdlib.balanceOf(whoi)),
       "\n"
@@ -106,18 +106,23 @@ await register(accBob, accAdmin);
 await register(four, accAdmin);
 await register(two, accBob);
 await register(five, accBob);
-// await register(one, accBob);
+await register(one, five);
+await register(three, five);
+await register(six, two);
+await register(seven, two);
 
-// await register(two, accBob);
+
+await getContractBalance(two);
+await withdraw(two);
+await getContractBalance(two);
+await getContractBalance(five);
+await withdraw(five);
+await getContractBalance(five);
 await getContractBalance(accBob);
-await withdraw(accBob)
+await withdraw(accBob);
 await getContractBalance(accBob);
-// await register(three, accBob);
-// await getContractBalance(accAdmin);
-// await getContractBalance(four);
-// await getContractBalance(five);
-// console.log(await stdlib.formatCurrency(await stdlib.balanceOf(five)));
-// console.log(await stdlib.formatCurrency(await stdlib.balanceOf(six)));
-// console.log(await stdlib.formatCurrency(await stdlib.balanceOf(five)));
+await getContractBalance(accAdmin);
+await withdraw(accAdmin);
+await getContractBalance(accAdmin);
 
 console.log("Goodbye, Everyone!");
