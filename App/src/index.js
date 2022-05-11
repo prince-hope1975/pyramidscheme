@@ -2,17 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import { BrowserRouter,Route,Routes } from "react-router-dom"
+// import Home from './pages/Home';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        {/* <Route path="register" element={<RewardsPage />} />
-        <Route path="profile" element={<Portfolio />} /> */}
-      </Routes>
-    </BrowserRouter>
+  <App/>
   </React.StrictMode>
 );
 

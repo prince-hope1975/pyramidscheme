@@ -115,14 +115,18 @@ await register(seven, two);
 await getContractBalance(two);
 await withdraw(two);
 await getContractBalance(two);
+
 await getContractBalance(five);
 await withdraw(five);
 await getContractBalance(five);
+
 await getContractBalance(accBob);
 await withdraw(accBob);
 await getContractBalance(accBob);
-await getContractBalance(accAdmin);
-await withdraw(accAdmin);
-await getContractBalance(accAdmin);
+
+
+// await getContractBalance(accAdmin);
+// await withdraw(accAdmin);
+// await getContractBalance(accAdmin);
 
 console.log("Goodbye, Everyone!");
