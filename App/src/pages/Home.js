@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import styled from "styled-components";
 import ButtonComp from "@mui/material/Button";
 import {ALGO_WalletConnect as MyAlgoConnect, loadStdlib}from "@reach-sh/stdlib"
