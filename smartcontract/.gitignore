@@ -2,3 +2,5 @@ build/
 node_modules/
 tls/
 reach
+.dockerignore
+Dockerfile
