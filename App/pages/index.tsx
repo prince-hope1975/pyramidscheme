@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { loadStdlib } from "@reach-sh/stdlib";
 import { ALGO_MyAlgoConnect as MyAlgoConnect } from "@reach-sh/stdlib";
 import { useGlobalContext } from "../context";
-import * as backend from "../build/index.main.mjs";
+import * as backend from "../main/index.main.mjs";
 import { Container, Button } from "../Components/Components";
 import styled from "styled-components";
 import { GiGreatPyramid } from "react-icons/gi";
