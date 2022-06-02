@@ -8,13 +8,34 @@ import styled from "styled-components";
 import { GiGreatPyramid } from "react-icons/gi";
 import { ALGO_WalletConnect as WalletConnect } from "@reach-sh/stdlib";
 import FormDialog from "../Components/formDialogue";
+// Import the functions you need from the SDKs you need
+// import { initializeApp } from "firebase/app";
+// import { getAnalytics } from "firebase/analytics";
+// // TODO: Add SDKs for Firebase products that you want to use
+// // https://firebase.google.com/docs/web/setup#available-libraries
 
+// // Your web app's Firebase configuration
+// // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// const firebaseConfig = {
+//   apiKey: "AIzaSyCQ14DqFSJtQYoFgw7BU_UgMRku7usIciQ",
+//   authDomain: "snapchat-6d946.firebaseapp.com",
+//   databaseURL: "https://snapchat-6d946-default-rtdb.firebaseio.com",
+//   projectId: "snapchat-6d946",
+//   storageBucket: "snapchat-6d946.appspot.com",
+//   messagingSenderId: "1078758563339",
+//   appId: "1:1078758563339:web:434343969af056be81710e",
+//   measurementId: "G-F2HF9F5S1X"
+// };
+
+// // Initialize Firebase
+// const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app);
 const reach = loadStdlib((process.env.REACH_CONNECTOR_MODE = "ALGO"));
-// reach.providerEnvByName("TestNet") 
+
 const deadline = reach.connector === "CFX" ? 500 : 250;
 const ctcInfo = `{
   "type": "BigNumber",
-  "hex": "0x057b60c4"
+  "hex": "0x05898349"
 }`;
 
 const Home = () => {
@@ -27,6 +48,7 @@ const Home = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("")
   const [address, setAddress] = useState("")
+  // const [contractInfo,setContractInfo]
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -57,7 +79,7 @@ const Home = () => {
   //   const acc = account.contract(backend);
   //   try {
   //     await acc.p.Deployer({
-  //       price: reach.parseCurrency(20),
+  //       price: reach.parseCurrency(1),
   //       ready: () => {
   //         console.log("The contract is ready to interact");
   //         throw 42;
@@ -69,7 +91,7 @@ const Home = () => {
   //   }
   //   dispatch({ type: "SET_ACCOUNT", payload: account });
   //   const info = await acc.getInfo();
-  //   setContractInfo(JSON.stringify(info, null, 2));
+  //   // setContractInfo(JSON.stringify(info, null, 2));
   //   console.log(JSON.stringify(info, null, 2));
   // };
 
