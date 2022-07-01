@@ -11,13 +11,20 @@ The tutorial assumes Zero knowledge of working with `Reach`, but will advice you
 ## Prerequisites
 If you need help installing Reach and its prerequisites then get started at our [Quick Installation Guide](https://docs.reach.sh/quickstart/#quickstart)
 
+## Application Structure
+Before writing a single line of code, it is common practice to outline the flow of your application either through writing comments or visualizations of the app flow/structure. In this tutorial we will go with latter to help us understand what we're building.
 
+![[/image](https://i.ibb.co/T4h2CRx/flow.png)](https://i.ibb.co/T4h2CRx/flow.png)
+
+The above figure gives us a general view of  the application flow, rules and participants. 
+- A Person "Deployer" creates the contract and deploys it. They allow a maximum of two people to connect and deposit directly under them.
+- The 
 ## Getting Started
 We assume that you’ll go through this tutorial in a directory named ~/reach/scheme:
 
 `$ mkdir -p ~/reach/scheme`
 
-And that you have gone through the reach istallationprocess or have a copy of Reach installed in ~/reach so you can write
+And that you have gone through the reach installation process or have a copy of Reach pre-installed in ~/reach so you can write
 
 `$ ../reach version`
 
@@ -29,7 +36,7 @@ This initializes a new reach project and creates two files, `index.rsh` and `ind
 
 Your folder structure should look something like this
 
-![folder](https://i.ibb.co/hKCrRJ1/Folder-Structure.png")
+![folder](https://i.ibb.co/K2wJsc1/Screenshot-from-2022-07-01-07-58-21.png)
 
 The `index.rsh` file should look something like this.
 
