@@ -7,29 +7,26 @@ import { Container, Button } from "../Components/Components";
 import styled from "styled-components";
 import { GiGreatPyramid } from "react-icons/gi";
 import { ALGO_WalletConnect as WalletConnect } from "@reach-sh/stdlib";
-import FormDialog from "../Components/formDialogue";
-// Import the functions you need from the SDKs you need
-// import { initializeApp } from "firebase/app";
-// import { getAnalytics } from "firebase/analytics";
-// // TODO: Add SDKs for Firebase products that you want to use
-// // https://firebase.google.com/docs/web/setup#available-libraries
+import FormDialog, { Message } from "../Components/formDialogue";
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set } from "firebase/database";
+import Link from "next/link";
+import styles from "../styles/Home.module.scss";
 
-// // Your web app's Firebase configuration
-// // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-// const firebaseConfig = {
-//   apiKey: "AIzaSyCQ14DqFSJtQYoFgw7BU_UgMRku7usIciQ",
-//   authDomain: "snapchat-6d946.firebaseapp.com",
-//   databaseURL: "https://snapchat-6d946-default-rtdb.firebaseio.com",
-//   projectId: "snapchat-6d946",
-//   storageBucket: "snapchat-6d946.appspot.com",
-//   messagingSenderId: "1078758563339",
-//   appId: "1:1078758563339:web:434343969af056be81710e",
-//   measurementId: "G-F2HF9F5S1X"
-// };
+const firebaseConfig = {
+  apiKey: "AIzaSyCQ14DqFSJtQYoFgw7BU_UgMRku7usIciQ",
+  authDomain: "snapchat-6d946.firebaseapp.com",
+  databaseURL: "https://snapchat-6d946-default-rtdb.firebaseio.com",
+  projectId: "snapchat-6d946",
+  storageBucket: "snapchat-6d946.appspot.com",
+  messagingSenderId: "1078758563339",
+  appId: "1:1078758563339:web:434343969af056be81710e",
+  measurementId: "G-F2HF9F5S1X",
+};
 
-// // Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 const reach = loadStdlib((process.env.REACH_CONNECTOR_MODE = "ALGO"));
 
 const deadline = reach.connector === "CFX" ? 500 : 250;
@@ -39,40 +36,49 @@ const ctcInfo = `{
 }`;
 
 const Home = () => {
-  const { dispatch, state } = useGlobalContext();
-  const [account, setAccount] = useState(null);
-  const [isMyAlgo ,setMyAlgo] = useState(false);
-  const [isConnected, setConnected] = useState(false);
+  const {
+    dispatch,
+    state,
+    message,
+    setMessage,
+    isConnected,
+    setConnected,
+    account,
+    setAccount,
+    ctc,
+    setContract,
+    handlePopup,
+  } = useGlobalContext();
+  const [isMyAlgo, setMyAlgo] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [ctc, setContract] = useState(null);
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("")
-  const [address, setAddress] = useState("")
-  // const [contractInfo,setContractInfo]
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+
+  const [data, setData] = useState(Data);
 
   const handleClickOpen = () => {
     setOpen(true);
   };
+  const handleClose = ()=>{
+    setOpen(false)
+  }
 
-  const handleClose = async() => {
+  const handleSubmit  = async () => {
     setOpen(false);
-    await register(address)
-
-  };
-  const connectAcct = async () => {
-    try {
-      const newAccount = await reach.getDefaultAccount();
-      setConnected(true);
-      const ctc = newAccount.contract(backend, JSON.parse(ctcInfo));
-      setContract(ctc);
-      setAccount(newAccount);
-    } catch (error) {
-      setLoading(!loading);
-      console.log(error);
-    }
+    await register(await account.getAddress());
   };
 
-
+  async function writeUserData() {
+    const db = getDatabase();
+    set(ref(db, "users/" + (await account.getAddress())), {
+      username: name,
+      parent: address,
+      availableSlot: 2,
+      children: [null, null],
+    });
+    // console.log(address, " hi", name);
+  }
 
   // const deploy = async () => {
   //   // const { networkAccount } = state;
@@ -97,10 +103,17 @@ const Home = () => {
 
   const register = async (address) => {
     try {
-      const accc = ctc.apis.Schemers.joinPyramid(address);
+      const accc = await ctc.apis.Schemers.joinPyramid(address);
       console.log("Registration of ", reach.formatAddress(account), accc);
+      return setTimeout(async() => {
+        updateData(name, await account.getAddress(), address)
+      }, 4000);
     } catch (error) {
       console.error(error);
+      handlePopup("Successfully registered for scheme")
+      return setTimeout(async () => {
+        updateData(name, await account.getAddress(), address);
+      }, 4000);
     }
   };
 
@@ -111,84 +124,88 @@ const Home = () => {
       console.log("Successfully withdrawn", withdrawn);
     } catch (error) {
       console.log(error);
+      handlePopup(`${error}`.substring(0, 160) + "...");
     }
+  };
+
+  const updateData = async (name: string, address: string, parentAddress) => {
+    const obj = data.filter((item) => item.address == parentAddress);
+    if (obj[0]?.availableSlots == 0) {
+      handlePopup("Parent has no empty slots");
+      throw 43;
+      return;
+    }
+    const newData = data.map((item) => {
+      const { address, name, availableSlots, price } = item;
+      if (address === parentAddress) {
+        return { ...item, availableSlots: availableSlots - 1 };
+      }
+      return item
+    });
+    const final = [
+      ...newData,
+      { name, address, availableSlots: 2, price: "20" },
+    ];
+    window.localStorage.setItem("userData", JSON.stringify(final));
+    setData(final);
+    return final;
   };
 
   useEffect(() => {
     dispatch({ type: "SET_ACCOUNT", payload: account });
     console.log(state);
   }, [account, state, dispatch]);
-    useEffect(() => {
-      if (isMyAlgo) {
-        reach.setWalletFallback(
-          reach.walletFallback({
-            providerEnv: "TestNet",
-            MyAlgoConnect,
-          })
-        );
-        console.log("My Algo");
-      } else {
-        reach.setWalletFallback(
-          reach.walletFallback({
-            providerEnv: "TestNet",
-            WalletConnect,
-          })
-        );
-        console.log("Wallet connect");
-      }
-    }, [isMyAlgo]);
+  useEffect(() => {
+    if (isMyAlgo) {
+      reach.setWalletFallback(
+        reach.walletFallback({
+          providerEnv: "TestNet",
+          MyAlgoConnect,
+        })
+      );
+      console.log("My Algo");
+    } else {
+      reach.setWalletFallback(
+        reach.walletFallback({
+          providerEnv: "TestNet",
+          WalletConnect,
+        })
+      );
+      console.log("Wallet connect");
+    }
+  }, [isMyAlgo]);
 
+  useEffect(() => {
+    const userData: Array<{
+      name: string;
+      price: string;
+      availableSlots: number;
+      address: string;
+    }> = JSON.parse(window.localStorage.getItem("userData"));
+    if (userData) {
+      setData(userData);
+    }
+  }, []);
+  useEffect(()=>{
+    console.log(data)
+  },[data])
+  useEffect(()=>{
+    console.log(name)
+  },[name])
   return (
     <>
       <Container style={{ paddingTop: "5.5rem" }}>
-        <Header
-          style={{
-            position: "absolute",
-            top: 0,
-            width: "100vw",
-            display: "flex",
-            // borderBottom: "3px solid hsl(0, 0%, 0%, 0.3)",
-            boxShadow: "2px 2px 2px hsl(0, 0%, 20%, 0.5)",
-            padding: "1rem 2rem",
-          }}
-        >
-          <p>
-            <GiGreatPyramid style={{ fontSize: "1.3rem", color: "white" }} />
-          </p>
-          <div
-            style={{
-              marginLeft: "auto",
-              gap: "2rem",
-              display: "flex",
-              marginRight: "2rem",
-              alignItems: "center",
-              textTransform: "uppercase",
-              fontWeight: "lighter",
-            }}
-          >
-            <a href="#register">register</a>
-            <a href="#balance">balance</a>
-          </div>
-          <Button style={{}} onClick={connectAcct}>
-            {!isConnected ? "connect" : "Connected"}
-          </Button>
-        </Header>
+        <Message
+          message={message.message}
+          open={message.isOpen}
+          className={``}
+        />
+
         <div>
-          <section
-            style={{
-              display: "flex",
-              maxWidth: "800px",
-              margin: "auto",
-              alignItems: "center",
-              minHeight: "85vh",
-              padding: "0 2rem",
-            }}
-          >
+          <section className={styles.section} style={{}}>
             <h1
               style={{
-                width: "50%",
                 color: "hsl(0, 40.00000000000017%, 98.03921568627452%)",
-                // padding: "0.7rem",
                 paddingTop: "4.6rem",
                 fontSize: "var(--font)",
               }}
@@ -233,7 +250,15 @@ const Home = () => {
               minHeight: "90vh",
             }}
           >
-            <span style={{ textAlign: "center", padding: "1rem" }}>
+            <span
+              id="register"
+              style={{
+                textAlign: "center",
+                padding: "1rem",
+                fontSize: "2rem",
+                textTransform: "uppercase",
+              }}
+            >
               Join Ranks
             </span>
             <div
@@ -247,10 +272,10 @@ const Home = () => {
                 margin: "auto",
               }}
             >
-              {Data.map(({ availableSlots, name, price, address }) => {
+              {data?.map(({ name, price, availableSlots, address }) => {
                 return (
                   <div
-                  key={name}
+                    key={name}
                     style={{
                       display: "flex",
                       justifyContent: "spaced-between",
@@ -274,11 +299,20 @@ const Home = () => {
                       available
                     </p>{" "}
                     <Button
-                      onClick={() => {
-                        setName(name)
-                        // register(address);
-                        setAddress(address)
-                        handleClickOpen();
+                      onClick={async () => {
+                        try {
+                          if (account) {
+                            handleClickOpen();
+                            setAddress(address);
+                            // await writeUserData();
+                          } else {
+                            handlePopup("Please connect  Account First");
+                          }
+                          // updateData(name, await account.getAddress(), address)
+                        } catch (error) {
+                          setOpen(false);
+                          console.error("there is an error");
+                        }
                       }}
                       style={{
                         textAlign: "center",
@@ -287,20 +321,22 @@ const Home = () => {
                         fontWeight: "bold",
                       }}
                     >
-                      Join Chain
+                      <Link href={"/"}>Join Chain</Link>
                     </Button>
                   </div>
                 );
               })}
             </div>
           </section>
-          {/* <Button style={{ position: "relative" }} onClick={withdraw}>
-            Withdraw
-          </Button>
-          <Button onClick={register} unable={!isConnected}>
-            Register
-          </Button> */}
-          <FormDialog open={open} handleClose={handleClose} name={name} />
+
+          <FormDialog
+            open={open}
+            handleClose={handleClose}
+            // @ts-ignore
+            handleSubmit={handleSubmit}
+            name={name}
+            setName={setName}
+          />
         </div>
       </Container>
     </>
@@ -323,5 +359,87 @@ const Data = [
 ];
 
 const Header = styled.div``;
+export const Head = () => {
+  const {
+    dispatch,
+    state,
+    message,
+    setMessage,
+    isConnected,
+    setConnected,
+    account,
+    setAccount,
+    ctc,
+    setContract,
+    handlePopup,
+  } = useGlobalContext();
+  const connectAcct = async () => {
+    try {
+      const newAccount = await reach.getDefaultAccount();
+      setConnected(true);
+      const ctc = newAccount.contract(backend, JSON.parse(ctcInfo));
+      setContract(ctc);
+      setAccount(newAccount);
+    } catch (error) {
+      // setLoading(!loading);
+      console.log(error);
+    }
+  };
+    const withdraw = async () => {
+      try {
+        const ctc = account.contract(backend, JSON.parse(ctcInfo));
+        const withdrawn = await ctc.apis.Schemers.withdraw();
+        console.log("Successfully withdrawn", withdrawn);
+      } catch (error) {
+        console.log(error);
+        handlePopup(`${error}`.substring(0, 160) + "...");
+      }
+    };
+  return (
+    <Header
+      style={{
+        position: "absolute",
+        top: 0,
+        width: "100vw",
+        display: "flex",
+        // borderBottom: "3px solid hsl(0, 0%, 0%, 0.3)",
+        boxShadow: "2px 2px 2px hsl(0, 0%, 20%, 0.5)",
+        padding: "1rem 2rem",
+      }}
+    >
+      <p>
+        <GiGreatPyramid style={{ fontSize: "1.3rem", color: "white" }} />
+      </p>
+      <div
+        style={{
+          marginLeft: "auto",
+          gap: "2rem",
+          display: "flex",
+          marginRight: "2rem",
+          alignItems: "center",
+          textTransform: "uppercase",
+          fontWeight: "lighter",
+        }}
+      >
+        <a href="#register">register</a>
+        <a
+          href="#balance"
+          onClick={() => {
+            if (!isConnected) {
+              handlePopup(
+                "Cannot check balance!!! \n You need to register first "
+              );
+            }
+          }}
+        >
+          balance
+        </a>
+      </div>
+      <Button style={{}} onClick={connectAcct}>
+        {!isConnected ? "connect" : "Connected"}
+      </Button>
+    </Header>
+  );
+};
 
 export default Home;

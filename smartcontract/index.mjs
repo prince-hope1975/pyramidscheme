@@ -3,9 +3,12 @@ import * as backend from "./build/index.main.mjs";
 const stdlib = loadStdlib(process.env);
 
 const startingBalance = stdlib.parseCurrency(100);
-const users = await stdlib.newTestAccounts(10, startingBalance);
+
+// Created 10 users/ test accounts
+const [one, two, three, four, five, six, seven, eight, nine, ten] = await stdlib.newTestAccounts(10, startingBalance);
+
 const deadline = stdlib.connector === "CFX" ? 500 : 250;
-const [one, two, three, four, five, six, seven , eight, nine, ten] = users;
+// const [one, two, three, four, five, six, seven , eight, nine, ten] = users;
 
 const [accAdmin, accBob] = await stdlib.newTestAccounts(2, startingBalance);
 console.log("Hello admin and Participants!");
@@ -13,6 +16,7 @@ console.log("Hello admin and Participants!");
 console.log("Launching...");
 const ctcAdmin = accAdmin.contract(backend);
 
+// Deployer deploys the contract
 try {
   await ctcAdmin.p.Deployer({
     price: stdlib.parseCurrency(20),
@@ -27,6 +31,8 @@ try {
 }
 console.log("Starting interactions soon with APis");
 const ctcWho = (whoi) => users[whoi].contract(backend, ctcAdmin.getInfo());
+
+
 
 const register = async (whoi, address) => {
   try {
@@ -80,24 +86,25 @@ const getContractBalance = async (whoi) => {
   }
 };
 
-const Withdraw = async (whoi) => {
-  try {
-    const ctc = whoi.contract(backend, ctcAdmin.getInfo());
-    const accc = await ctc.apis.Schemers
-      .withdraw
-      // stdlib.formatAddress(address)
-      ();
-    console.log(
-      "\Address in contract",
-      stdlib.formatAddress(accc),
-      "\Address in wallet",
-      stdlib.formatAddress((whoi)),
-      "\n"
-    );
-  } catch (error) {
-    console.log(error);
-  }
-};
+// const Withdraw = async (whoi) => {
+//   try {
+//     const ctc = whoi.contract(backend, ctcAdmin.getInfo());
+//     const accc = await ctc.apis.Schemers
+//       .withdraw
+//       // stdlib.formatAddress(address)
+//       ();
+//     console.log(
+//       "\Address in contract",
+//       stdlib.formatAddress(accc),
+//       "\Address in wallet",
+//       stdlib.formatAddress((whoi)),
+//       "\n"
+//     );
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
+
 
 
 console.log("Starting backends...");
@@ -125,8 +132,5 @@ await withdraw(accBob);
 await getContractBalance(accBob);
 
 
-// await getContractBalance(accAdmin);
-// await withdraw(accAdmin);
-// await getContractBalance(accAdmin);
 
 console.log("Goodbye, Everyone!");

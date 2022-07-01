@@ -6,18 +6,16 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import styles from "../styles/Home.module.scss"
 
-export default function FormDialog({ open, handleClose , name}) {
+export default function FormDialog({ open, handleSubmit,handleClose, name, setName }) {
   //   const [open, setOpen] = React.useState(false);
 
-
-  const handleSumbit = () => {};
+  // const handleSumbit = () => {};
 
   return (
     <div>
-      {/* <Button variant="outlined" onClick={handleClickOpen}>
-        Open form dialog
-      </Button> */}
+     
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Register under {name}</DialogTitle>
         <DialogContent>
@@ -32,14 +30,24 @@ export default function FormDialog({ open, handleClose , name}) {
             type="text"
             fullWidth
             variant="standard"
+            onChange={(e) => {
+              setName(e.target.value);
+            }}
           />
-    
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleClose}>Register</Button>
+          <Button onClick={handleSubmit}>Register</Button>
         </DialogActions>
       </Dialog>
     </div>
+  );
+}
+
+export const Message = ({open, message, className})=>{
+  return (
+    <Dialog open={open}>
+      <div className={`${styles.message} ${className}`}>{message}</div>
+    </Dialog>
   );
 }
