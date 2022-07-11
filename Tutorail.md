@@ -1,24 +1,37 @@
 # Tutorial: Pyramid Scheme
-Simply put a pyramid/ponzi scheme is a fraudulent investment that is setup in a way, that requires using new members deposits to pay out old members. More on that  [here](https://www.investopedia.com/insights/what-is-a-pyramid-scheme/).  
- If you've ever wondered what it would be like to build your very own fully functional, money making pyramid scheme, that's also blockchain based, and you would like to join the ranks of the great ponzi schemeres, then this is the tutorial for you. The tutorial will walk you through how to get started using `Reach`, `Javascript`, and `Next` to build your very own pyramid scheme and deploy it to the Algorand chain or any of the chains supported by reach.
+Simply put a pyramid/Ponzi scheme is a fraudulent investment that is set up in a way, that requires using new members' deposits to pay out old members. More on that [here](https://www.investopedia.com/insights/what-is-a-pyramid-scheme/).  
+ If you've ever wondered what it would be like to build your very own fully functional, money-making pyramid scheme, that's also blockchain-based, and you would like to join the ranks of the great Ponzi Schemers, then this is the tutorial for you. The tutorial will walk you through how to get started using `Reach`, `Javascript`, and `Next` to build your very own pyramid scheme and deploy it to the Algorand chain or any of the chains supported by reach.
 
 ## Aim
 
-The tutorial aims to give you solid knowledge required to get you started building your own protocols and DApps on the blockchain. It will give you an overview of what it takes to create a smartcontract and create User Interfaces that interact with such contracts, all with the help of a powerful tool called `Reach`.
+The tutorial aims to give you the solid knowledge required to get you started building protocols and DApps on the blockchain. It will give you an overview of what it takes to create a smart contract and create User Interfaces that interact with such contracts, all with the help of a powerful tool called `Reach`.  
+*To get a better idea of what Reach is please visit [here](https://docs.reach.sh)*
 
-The tutorial assumes Zero knowledge of working with `Reach`, but will advice you at least know the basics of programming, before going through this tutorial.This is to enable you get the best out of this tutorial but not a prerequisite. 
+<div align="center">
+  <img alt="Pyramid Scheme App" src="https://media.giphy.com/media/e1zbZCtDYigoDaGUJq/giphy.gif" width="1000"><br>
+  <sup>Pyramid Scheme Visual Representation <sup>
+</div>
+
+The tutorial assumes Zero knowledge of working with `Reach` but will advise you to at least know the basics of programming, before going through this tutorial. This is to enable you to get the best out of this tutorial but is not a prerequisite. 
 
 ## Prerequisites
 If you need help installing Reach and its prerequisites then get started at our [Quick Installation Guide](https://docs.reach.sh/quickstart/#quickstart)
 
 ## Application Structure
-Before writing a single line of code, it is common practice to outline the flow of your application either through writing comments or visualizations of the app flow/structure. In this tutorial we will go with latter to help us understand what we're building.
+Before writing a single line of code, it is common practice to outline the flow of your application either through writing Pseudo code in the form of comments or visualizations of the app flow/structure. In this tutorial, we will go with both to help us better understand what we're building.
 
-![[/image](https://i.ibb.co/T4h2CRx/flow.png)](https://i.ibb.co/T4h2CRx/flow.png)
 
-The above figure gives us a general view of  the application flow, rules and participants. 
-- A Person "Deployer" creates the contract and deploys it. They allow a maximum of two people to connect and deposit directly under them.
-- The 
+<div align="center">
+  <img alt="Pyramid Scheme App" src="https://i.ibb.co/T4h2CRx/flow.png" width="1000"><br>
+  <sup>The above figure gives us a general view of the application flow, rules and participants.  <sup>
+</div>
+
+The above figure gives us a general view of the application flow, rules and participants. 
+- A Person "Deployer" creates the contract and deploys it. They allow a maximum of two people "users" to connect and deposit directly under them.
+- The "users" can in turn refer two people under them and have the ability to withdraw a fraction of the deposits, once they have referred their two users.
+- "Users" are not allowed to refer more than 2 people directly under them else the contract will throw an error.
+
+
 ## Getting Started
 We assume that you’ll go through this tutorial in a directory named ~/reach/scheme:
 
@@ -36,7 +49,10 @@ This initializes a new reach project and creates two files, `index.rsh` and `ind
 
 Your folder structure should look something like this
 
-![folder](https://i.ibb.co/K2wJsc1/Screenshot-from-2022-07-01-07-58-21.png)
+<div align="center">
+  <img alt="Pyramid Scheme App" src="https://i.ibb.co/K2wJsc1/Screenshot-from-2022-07-01-07-58-21.png" width="1000"><br>
+  <sup>Folder Structure <sup>
+</div>
 
 The `index.rsh` file should look something like this.
 
@@ -61,6 +77,8 @@ The `index.rsh` file should look something like this.
 19.  exit();
 20. });
 ```
+<b>NOTE</b>:  Reach programs are divided into four modes, namely `Init mode`, `Step Mode`, `Local Step Mode`, `Consensus Step Mode`.   
+_The official reach [wisdom for sale](https://docs.reach.sh/tut/wfs/#wfs-3) tutorial does a great job at explaining reach modes in-depth_
 
 Let's break down the above code block.
 
@@ -68,13 +86,13 @@ Line 1. specifies the version of reach that the compiler will use.
 
 Lines 3 creates a reach module and exports it as `main`. The syntax allows other reach contracts to import different reach modules and use their code.
 
-Lines 4 and 7 define the various participants of the application and store the participants "Alice" and "Bob" in constants "A" and "B" respectively. That is, it tells the reach program who has access to the contract, what methods they can call and what actions they can perform.
+Lines 4 and 7 occur in the `Init step` and they define the various participants of the application and store the participants "Alice" and "Bob" in constants "A" and "B" respectively. That is, it tells the reach program who has access to the contract, what methods they can call and what actions they can perform. _We will be changing this shortly_
 
-Line 10 initializes the contract and allows for custom logic.
+Line 10 initializes the contract and allows for custom logic (End of the `Init Step`).
 
 Line 12 and 15 are used to make private variables of each participant public and in 13 and 16, the "commit" statement ends the current consensus step and allows more local steps.
 
-_Lets look at the `index.mjs` file next_
+_Lets look at the  generated ``index.mjs` file next_
 
 ```ts
 1. import {loadStdlib} from '@reach-sh/stdlib';
@@ -106,7 +124,6 @@ _Lets look at the `index.mjs` file next_
 console.log('Goodbye, Alice and Bob!');
 ```
 
-The above code block is not "reach" specific. For simplicity's sake, we will breeze through the code execution.
 
 At the top, we import the required modules `loadstdlib` from `@reach/-sh/stdlib` and the reach compiled backend. We create a starting balance on line 5, then initialize two accounts we use for testing `accAlice` and `accBob` on line 7. We make `accAlice` deploy the contract and `accBob` attaches to that contract on lines 12 & 13. On lines 16 to 22, we implement both Alice's and Bob's interact objects.
 
@@ -118,34 +135,45 @@ This is now enough for Reach to compile and run our program. Let's try running
 
 Reach should now build and launch a Docker container for this application. Since the application doesn't do anything, you'll just see a lot of diagnostic messages though, so that's not very exciting
 
-## Battleship custom logic
+## Implementing Pyramid Scheme logic
 
-Let's start by defining the processes and steps that will take place in the application.
-
-- Two participants `A` and `B` will connect to the contract.
-- `A` sets a wager and a deadline and pays the wager amount into the contract.
-- `B` accepts the wager and pays into the contract
-- Both participants take turns placing their ships on a board with 100 spots.
-- The contract makes sure that `A ` doesn't know the contents of `B`'s board and vice versa.
-- `A` takes a turn trying to guess the position of the ships placed on `B`'s board.
-- `B` takes their turn trying to hit the ships on `A`'s board.
-- The game ends when all the ships on any player's board have been hit.
+Our Pyramid Scheme has multiple participants that perform different actions during the program. Let's go ahead and define them.
+- The contract will have a participant Deployer `D`, that sets all the necessary parameters the pyramid scheme will need, such as Price, How long the scheme will run and a host of variables.
+- The Contract will have an API, Schemers `S`, that will allow multiple users to join the pyramid scheme.
+- `S` will have multiple functions they can call to perform various actions, such as;
+  - `register` which allows people to register for the scheme
+  - `balance` which will get the balance of the user in the contract according to the number of users referred.
+  - `withdraw` which allows a user to withdraw their funds into their wallet of choice.
+<!-- - The contract ma -->
 
 ## Implementation
 
 Now we should implement the code logic for our `index.rsh` and `index.mjs`.  
- We start by adding the new interface objects that both participants have in common.
+ We start by creating our helper function and our interface object for the deployer. Essentially, the interface object is an object that contains all the functions and variables that are accessible to a participant, in this case, our deployer.
 
-```js
-1. const common = {
-2.   getBoard: Fun([], Array(UInt, 100)),
-3.   Ship: Array(Bool, 15),
-4.   updateShip: Fun([], Null),
-5.   seeOutcome: Fun([Bool], Null),
-6.   informTimeout: Fun([], Null),
-7.   getShip: Fun([], Array(Bool, 15)),
-8.   getHand: Fun([], UInt),
-9. };
+ 1 
+ ```js
+"reach 0.1";
+
+// Users register and deposit a fee
+// when 2 users deposit the fee the upline gets paid
+// for each deposit or withdrawal the contract deployer gets 2%
+// once the upline is paid the upline pays the upline an amount
+// the value paid to the upline is dependant 75% of what is recieved
+
+
+// Helper function
+const returnTheGreater = (x, y) => (x > y ? y : x);
+
+export const main = Reach.App(() => {
+    // This person sets the price
+    const D = Participant("Deployer", {
+        price: UInt,
+        // The deadline will be used to determine when the contract
+        ready: Fun([], Null),
+        // Execution would end
+        deadline: UInt,
+    });
 ```
 
 The `common` object contains all the functions and methods that both participants will inherit and use. 
@@ -702,16 +730,16 @@ Now run
 ```
 ../reach run
 ```
-That is it. You should have an implementation of battleship and a test file running on your local machine.
+That is it. You should have an implementation of scheme and a test file running on your local machine.
 ## Further Learning
 If you want to implement a more complex front-end Application using a front-end library (REACT, Vue, Angular, etc). Continue to get an idea of how reach can be used when building fullstack blockchain applications.
 
 
-NOTE: To fully utilize this section you need to have the repo locally [link](https://github.com/prince-hope1975/battleship-main)
+NOTE: To fully utilize this section you need to have the repo locally [link](https://github.com/prince-hope1975/scheme)
 
 
 Now we have a complete contract backend and test suite, now we can write the frontend. You can use any frontend library of your choice. In our case, we have chosen to use React.  
-In the React App navigate to `battleship-main/src/factories/playerFactory.js`. We are defining the logic for the participants
+In the React App navigate to `scheme/src/factories/playerFactory.js`. We are defining the logic for the participants
 
 ```js
 1. import Gameboard from "./gameboardFactory";
@@ -868,7 +896,7 @@ In the React App navigate to `battleship-main/src/factories/playerFactory.js`. W
 152. export default Player;
 ```
  
- We'll navigate to the `battleship-main/src/components/game_window/GameWindow.js` which houses the initial game logic
+ We'll navigate to the `scheme/src/components/game_window/GameWindow.js` which houses the initial game logic
  
  ```js
 1.  import React, {
@@ -1063,7 +1091,7 @@ The front-end structure is fairly complex so you'll have to properly go through 
 
 ## Discussion
 
-Congrats on finishing this tutorial. You implemented the battleship game that runs on the blockchain yourself.
+Congrats on finishing this tutorial. You implemented Your very own Pyramid scheme and are on your way to becoming one of the greats.
 
 If you found this tutorial rewarding please let us know on [the Discord Community](https://discord.gg/AZsgcXu).
 

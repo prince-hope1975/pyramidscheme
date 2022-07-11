@@ -60,11 +60,11 @@ const Home = () => {
   const handleClickOpen = () => {
     setOpen(true);
   };
-  const handleClose = ()=>{
-    setOpen(false)
-  }
+  const handleClose = () => {
+    setOpen(false);
+  };
 
-  const handleSubmit  = async () => {
+  const handleSubmit = async () => {
     setOpen(false);
     await register(await account.getAddress());
   };
@@ -105,12 +105,12 @@ const Home = () => {
     try {
       const accc = await ctc.apis.Schemers.joinPyramid(address);
       console.log("Registration of ", reach.formatAddress(account), accc);
-      return setTimeout(async() => {
-        updateData(name, await account.getAddress(), address)
+      return setTimeout(async () => {
+        updateData(name, await account.getAddress(), address);
       }, 4000);
     } catch (error) {
       console.error(error);
-      handlePopup("Successfully registered for scheme")
+      handlePopup("Successfully registered for scheme");
       return setTimeout(async () => {
         updateData(name, await account.getAddress(), address);
       }, 4000);
@@ -140,7 +140,7 @@ const Home = () => {
       if (address === parentAddress) {
         return { ...item, availableSlots: availableSlots - 1 };
       }
-      return item
+      return item;
     });
     const final = [
       ...newData,
@@ -186,160 +186,154 @@ const Home = () => {
       setData(userData);
     }
   }, []);
-  useEffect(()=>{
-    console.log(data)
-  },[data])
-  useEffect(()=>{
-    console.log(name)
-  },[name])
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+  useEffect(() => {
+    console.log(name);
+  }, [name]);
   return (
-    <>
-      <Container style={{ paddingTop: "5.5rem" }}>
-        <Message
-          message={message.message}
-          open={message.isOpen}
-          className={``}
-        />
+    <Container>
+      <Message message={message.message} open={message.isOpen} className={``} />
 
-        <div>
-          <section className={styles.section} style={{}}>
-            <h1
-              style={{
-                color: "hsl(0, 40.00000000000017%, 98.03921568627452%)",
-                paddingTop: "4.6rem",
-                fontSize: "var(--font)",
-              }}
-            >
-              Invest, refer & grow your income.
-            </h1>
-            <div
-              style={{
-                position: "relative",
-                width: "230px",
-                height: "11rem",
-                margin: "65px",
-                borderRadius: "10px",
-                background: "hsla(0, 0%, 100%, 0.1)",
-                backdropFilter: "blur(50px)",
-              }}
-            >
-              <img
-                style={{
-                  position: "absolute",
-                  width: "140%",
-                  left: "-55%",
-                  top: -80,
-                }}
-                src={"/BTC.png"}
-              />
-              <img
-                style={{
-                  position: "absolute",
-                  width: "80%",
-                  right: "-30%",
-                  top: 50,
-                }}
-                src={"/Eth.png"}
-              />
-            </div>
-          </section>
-          <section
+      <div>
+        <section className={styles.section}>
+          <h1
             style={{
-              display: "flex",
-              flexDirection: "column",
-              minHeight: "90vh",
+              color: "hsl(0, 40.00000000000017%, 98.03921568627452%)",
+              paddingTop: "4.6rem",
+              fontSize: "var(--font)",
             }}
           >
-            <span
-              id="register"
+            Invest, refer & grow your income.
+          </h1>
+          <div
+            style={{
+              position: "relative",
+              width: "230px",
+              height: "11rem",
+              margin: "65px",
+              borderRadius: "10px",
+              background: "hsla(0, 0%, 100%, 0.1)",
+              backdropFilter: "blur(50px)",
+            }}
+          >
+            <img
               style={{
-                textAlign: "center",
-                padding: "1rem",
-                fontSize: "2rem",
-                textTransform: "uppercase",
+                position: "absolute",
+                width: "140%",
+                left: "-55%",
+                top: -80,
               }}
-            >
-              Join Ranks
-            </span>
-            <div
+              src={"/BTC.png"}
+            />
+            <img
               style={{
-                width: "clamp(400px, 80%, 800px)",
-                minHeight: "15rem",
-                background: "hsla(0,0%,100%,0.1)",
-                borderRadius: "15px",
-                backdropFilter: "blur(10px)",
-                padding: "1rem 0",
-                margin: "auto",
+                position: "absolute",
+                width: "80%",
+                right: "-30%",
+                top: 50,
               }}
-            >
-              {data?.map(({ name, price, availableSlots, address }) => {
-                return (
-                  <div
-                    key={name}
+              src={"/Eth.png"}
+            />
+          </div>
+        </section>
+        <section
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "90vh",
+          }}
+        >
+          <span
+            id="register"
+            style={{
+              textAlign: "center",
+              padding: "1rem",
+              fontSize: "2rem",
+              textTransform: "uppercase",
+            }}
+          >
+            Join Ranks
+          </span>
+          <div
+            style={{
+              width: "clamp(400px, 80%, 800px)",
+              minHeight: "15rem",
+              background: "hsla(0,0%,100%,0.1)",
+              borderRadius: "15px",
+              backdropFilter: "blur(10px)",
+              padding: "1rem 0",
+              margin: "auto",
+            }}
+          >
+            {data?.map(({ name, price, availableSlots, address }) => {
+              return (
+                <div
+                  key={name}
+                  style={{
+                    display: "flex",
+                    justifyContent: "spaced-between",
+                    alignItems: "center",
+                    padding: "0px 2.5rem",
+                  }}
+                >
+                  <p style={{ textAlign: "center", width: "25%" }}>{name}</p>
+                  <p style={{ textAlign: "center", width: "25%" }}>
+                    ${price}
+                  </p>{" "}
+                  <p
                     style={{
-                      display: "flex",
-                      justifyContent: "spaced-between",
-                      alignItems: "center",
-                      padding: "0px 2.5rem",
+                      textAlign: "center",
+                      width: "25%",
+                      fontSize: "0.9rem",
+                      fontWeight: "lighter",
                     }}
                   >
-                    <p style={{ textAlign: "center", width: "25%" }}>{name}</p>
-                    <p style={{ textAlign: "center", width: "25%" }}>
-                      ${price}
-                    </p>{" "}
-                    <p
-                      style={{
-                        textAlign: "center",
-                        width: "25%",
-                        fontSize: "0.9rem",
-                        fontWeight: "lighter",
-                      }}
-                    >
-                      {availableSlots} slot{!(availableSlots === 1) && "s"}{" "}
-                      available
-                    </p>{" "}
-                    <Button
-                      onClick={async () => {
-                        try {
-                          if (account) {
-                            handleClickOpen();
-                            setAddress(address);
-                            // await writeUserData();
-                          } else {
-                            handlePopup("Please connect  Account First");
-                          }
-                          // updateData(name, await account.getAddress(), address)
-                        } catch (error) {
-                          setOpen(false);
-                          console.error("there is an error");
+                    {availableSlots} slot{!(availableSlots === 1) && "s"}{" "}
+                    available
+                  </p>{" "}
+                  <Button
+                    onClick={async () => {
+                      try {
+                        if (account) {
+                          handleClickOpen();
+                          setAddress(address);
+                          // await writeUserData();
+                        } else {
+                          handlePopup("Please connect  Account First");
                         }
-                      }}
-                      style={{
-                        textAlign: "center",
-                        width: "25%",
-                        textTransform: "Capitalize",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      <Link href={"/"}>Join Chain</Link>
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+                        // updateData(name, await account.getAddress(), address)
+                      } catch (error) {
+                        setOpen(false);
+                        console.error("there is an error");
+                      }
+                    }}
+                    style={{
+                      textAlign: "center",
+                      width: "25%",
+                      textTransform: "Capitalize",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    <Link href={"/"}>Join Chain</Link>
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
-          <FormDialog
-            open={open}
-            handleClose={handleClose}
-            // @ts-ignore
-            handleSubmit={handleSubmit}
-            name={name}
-            setName={setName}
-          />
-        </div>
-      </Container>
-    </>
+        <FormDialog
+          open={open}
+          handleClose={handleClose}
+          // @ts-ignore
+          handleSubmit={handleSubmit}
+          name={name}
+          setName={setName}
+        />
+      </div>
+    </Container>
   );
 };
 
@@ -385,16 +379,16 @@ export const Head = () => {
       console.log(error);
     }
   };
-    const withdraw = async () => {
-      try {
-        const ctc = account.contract(backend, JSON.parse(ctcInfo));
-        const withdrawn = await ctc.apis.Schemers.withdraw();
-        console.log("Successfully withdrawn", withdrawn);
-      } catch (error) {
-        console.log(error);
-        handlePopup(`${error}`.substring(0, 160) + "...");
-      }
-    };
+  const withdraw = async () => {
+    try {
+      const ctc = account.contract(backend, JSON.parse(ctcInfo));
+      const withdrawn = await ctc.apis.Schemers.withdraw();
+      console.log("Successfully withdrawn", withdrawn);
+    } catch (error) {
+      console.log(error);
+      handlePopup(`${error}`.substring(0, 160) + "...");
+    }
+  };
   return (
     <Header
       style={{
@@ -402,7 +396,6 @@ export const Head = () => {
         top: 0,
         width: "100vw",
         display: "flex",
-        // borderBottom: "3px solid hsl(0, 0%, 0%, 0.3)",
         boxShadow: "2px 2px 2px hsl(0, 0%, 20%, 0.5)",
         padding: "1rem 2rem",
       }}

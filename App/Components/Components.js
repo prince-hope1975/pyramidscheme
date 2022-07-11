@@ -4,6 +4,7 @@ import {
 } from "@mui/material";
 export const Container = styled.div `
   /* background-image: url("/Logo.png"); */
+  padding-top: 5.5rem;  
   width: 100vw;
   background-size: cover;
   min-height: 100vh;
