@@ -63,8 +63,7 @@ export const main = Reach.App(() => {
   users[D] = D;
   parentMap[D] = D;
   allocatedAmount[D] = 0;
-
-  registeredUser[D] = {
+  const deployerObj = {
     address: D,
     numberOfChildren: 0,
     totalUnder: 0,
@@ -72,6 +71,7 @@ export const main = Reach.App(() => {
     allowedToWithdraw: 0,
   };
 
+  registeredUser[D] = deployerObj;
   // This is where the main logic of our application is
   const [keepGoing, howMany, total] = parallelReduce([true, 0, 0])
     .define(() => {
@@ -83,59 +83,60 @@ export const main = Reach.App(() => {
        */
       const register = (parent_address, user_address) => {
         check(!(user_address == D), "cannot register as deployer");
-        check(isSome(registeredUser[user_address]), "Already a member sorry");
+        check(isNone(registeredUser[user_address]), "Already a member sorry");
         check(
           fromSome(numChildren[parent_address], 0) < 2,
           "No empty slots for that user"
         );
 
         return () => {
-          numChildren[parent_address] =
-            fromSome(numChildren[parent_address], 0) + 1;
-          parentMap[user_address] = parent_address;
-          users[user_address] = user_address;
-          totalKids[parent_address] =
-            fromSome(totalKids[parent_address], 0) + 1;
-          allocatedAmount[user_address] = 0;
-          allocatedAmount[parent_address] =
-            fromSome(allocatedAmount[parent_address], 0) + price;
+          const parent = fromSome(registeredUser[parent_address], deployerObj);
+          const currentUser = fromSome(
+            registeredUser[user_address],
+            deployerObj
+          );
+
+          registeredUser[parent_address] = {
+            ...parent,
+            numberOfChildren: parent.numberOfChildren + 1,
+            totalUnder: parent.totalUnder + 1,
+            allowedToWithdraw: parent.allowedToWithdraw + price,
+          };
+          registeredUser[user_address] = {
+            ...currentUser,
+            parent: parent_address,
+          };
+
           return [keepGoing, howMany + 1, total + price];
         };
       };
       const user_balance = (user_address) => {
-        check(!(fromSome(users[user_address], D) == D), "Not a member");
+        check(isSome(registeredUser[user_address]), "Not a member");
         check(!(user_address == D), "Unable to check balance");
         return () => {
-          const val = fromSome(allocatedAmount[user_address], 0);
-          return val;
+          const val = fromSome(registeredUser[user_address], deployerObj);
+          return val.allowedToWithdraw;
         };
       };
       const withdraw_accumulated_funds = (user_address, confirm) => {
-        check(!(user_address == D), "You have no uplines");
-        check(
-          !(fromSome(allocatedAmount[user_address], 0) == 0),
-          "Insufficient Balance"
-        );
-        check(
-          fromSome(numChildren[fromSome(parentMap[user_address], D)], 0) >= 2,
-          "Need at least two down lines"
-        );
+        const user = fromSome(registeredUser[user_address], deployerObj);
+        const parent = fromSome(registeredUser[user.parent], deployerObj);
+        check(!(user_address == D), "You cannot withdraw as deployer");
+        check(!(user.allowedToWithdraw == 0), "Insufficient Balance");
+        check(parent.numberOfChildren >= 2, "Need at least two down lines");
         check(balance() > price);
         return () => {
-          const amt = fromMaybe(
-            allocatedAmount[user_address],
-            () => 0,
-            (x) => (x * 30) / 100
-          );
+          const amt = (user.allowedToWithdraw * 30) / 100;
           const amount = returnTheGreater(balance(), amt);
-          check(balance() >= amount, "Balance Empty");
           confirm(amount);
           transfer(amount).to(user_address);
-          allocatedAmount[fromSome(parentMap[user_address], D)] =
-            fromSome(allocatedAmount[fromSome(parentMap[user_address], D)], 0) +
-            amount * 2;
-          allocatedAmount[user_address] = 0;
-          allocatedAmount[this] = fromSome(totalKids[this], 0);
+          //   We are adding the remaining 60% to the parent's balance
+          registeredUser[parent.address] = {
+            ...parent,
+            allowedToWithdraw: parent.allowedToWithdraw + amount * 2,
+          };
+          registeredUser[user_address] = {...user, allowedToWithdraw: 0}
+        
 
           const final = total - amount;
           return [keepGoing, howMany, final];

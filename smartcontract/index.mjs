@@ -5,7 +5,8 @@ const stdlib = loadStdlib(process.env);
 const startingBalance = stdlib.parseCurrency(100);
 
 // Created 10 users/ test accounts
-const [one, two, three, four, five, six, seven, eight, nine, ten] = await stdlib.newTestAccounts(10, startingBalance);
+const [one, two, three, four, five, six, seven, eight, nine, ten] =
+  await stdlib.newTestAccounts(10, startingBalance);
 
 const deadline = stdlib.connector === "CFX" ? 500 : 250;
 // const [one, two, three, four, five, six, seven , eight, nine, ten] = users;
@@ -31,8 +32,6 @@ try {
 }
 console.log("Starting interactions soon with APis");
 const ctcWho = (whoi) => users[whoi].contract(backend, ctcAdmin.getInfo());
-
-
 
 const register = async (whoi, address) => {
   try {
@@ -62,7 +61,7 @@ const withdraw = async (whoi) => {
   try {
     const ctc = whoi.contract(backend, ctcAdmin.getInfo());
     const withdrawn = await ctc.apis.Schemers.withdraw();
-    console.log("Successfully withdrawn", withdrawn);
+    console.log("Successfully withdrawn", stdlib.formatCurrency(withdrawn));
   } catch (error) {
     console.log(error);
   }
@@ -70,13 +69,11 @@ const withdraw = async (whoi) => {
 const getContractBalance = async (whoi) => {
   try {
     const ctc = whoi.contract(backend, ctcAdmin.getInfo());
-    const accc = await ctc.apis.Schemers
-      .checkBalance
-      // stdlib.formatAddress(address)
-      ();
+    const accc = await ctc.apis.Schemers.checkBalance();
+    // stdlib.formatAddress(address)
     console.log(
       "\nBalance in contract",
-      (accc), 
+      stdlib.formatCurrency(accc),
       "\nBalance in wallet",
       stdlib.formatCurrency(await stdlib.balanceOf(whoi)),
       "\n"
@@ -105,8 +102,6 @@ const getContractBalance = async (whoi) => {
 //   }
 // };
 
-
-
 console.log("Starting backends...");
 
 await register(accBob, accAdmin);
@@ -117,7 +112,6 @@ await register(one, five);
 await register(three, five);
 await register(six, two);
 await register(seven, two);
-
 
 await getContractBalance(two);
 await withdraw(two);
@@ -130,7 +124,5 @@ await getContractBalance(five);
 await getContractBalance(accBob);
 await withdraw(accBob);
 await getContractBalance(accBob);
-
-
 
 console.log("Goodbye, Everyone!");
