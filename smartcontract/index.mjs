@@ -16,6 +16,7 @@ console.log("Hello admin and Participants!");
 
 console.log("Launching...");
 const ctcAdmin = accAdmin.contract(backend);
+console.log(stdlib.formatAddress(accAdmin))
 
 // Deployer deploys the contract
 try {
@@ -61,7 +62,13 @@ const withdraw = async (whoi) => {
   try {
     const ctc = whoi.contract(backend, ctcAdmin.getInfo());
     const withdrawn = await ctc.apis.Schemers.withdraw();
-    console.log("Successfully withdrawn", stdlib.formatCurrency(withdrawn));
+  const arr=  withdrawn.map((item)=>{return {
+      ...item,
+      allowedToWithdraw: stdlib.formatCurrency(item.allowedToWithdraw),
+      numberOfChildren: stdlib.bigNumberToNumber(item.numberOfChildren),
+      totalUnder: stdlib.bigNumberToNumber(item.totalUnder),
+    };})
+    console.log("Successfully withdrawn", (arr));
   } catch (error) {
     console.log(error);
   }
