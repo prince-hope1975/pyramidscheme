@@ -1,5 +1,6 @@
 "reach 0.1";
 
+
 // Users register and deposit a fee
 // when 2 users deposit the fee the upline gets paid
 // for each deposit or withdrawal the contract deployer gets 2%
@@ -8,6 +9,7 @@
 
 // Helper function
 const returnTheGreater = (x, y) => (x > y ? y : x);
+
 
 export const main = Reach.App(() => {
   // This person sets the price
@@ -18,12 +20,30 @@ export const main = Reach.App(() => {
     // Execution would end
     deadline: UInt,
   });
-
+  
   const S = API("Schemers", {
     joinPyramid: Fun([Address], Address),
     timesUp: Fun([], Bool),
     checkBalance: Fun([], UInt),
-    withdraw: Fun([], UInt),
+    withdraw: Fun(
+      [],
+      Tuple(
+        Object({
+          address: Address,
+          numberOfChildren: UInt,
+          totalUnder: UInt,
+          parent: Address,
+          allowedToWithdraw: UInt,
+        }),
+        Object({
+          address: Address,
+          numberOfChildren: UInt,
+          totalUnder: UInt,
+          parent: Address,
+          allowedToWithdraw: UInt,
+        })
+      )
+    ),
   });
 
   init();
@@ -36,11 +56,11 @@ export const main = Reach.App(() => {
   D.publish(price, deadline);
   commit();
   D.publish();
-
+  
   const deadlineBlock = relativeTime(deadline);
-
+  
   D.interact.ready();
-
+  
   /**
    * @definition
    * Defining maps to store all my data that will be used through out the app
@@ -53,8 +73,15 @@ export const main = Reach.App(() => {
       parent: Address,
       allowedToWithdraw: UInt,
     })
-  );
-  const users = new Map(Address, Address);
+    );
+    const users = new Map(Address, Address);
+    const deployerObj = {
+      address: D,
+      numberOfChildren: 0,
+      totalUnder: 0,
+      parent: D,
+      allowedToWithdraw: 0,
+    };
   const numChildren = new Map(Address, UInt);
   const totalKids = new Map(Address, UInt);
   const parentMap = new Map(Address, Address);
@@ -63,13 +90,6 @@ export const main = Reach.App(() => {
   users[D] = D;
   parentMap[D] = D;
   allocatedAmount[D] = 0;
-  const deployerObj = {
-    address: D,
-    numberOfChildren: 0,
-    totalUnder: 0,
-    parent: D,
-    allowedToWithdraw: 0,
-  };
 
   registeredUser[D] = deployerObj;
   // This is where the main logic of our application is
@@ -104,6 +124,7 @@ export const main = Reach.App(() => {
           };
           registeredUser[user_address] = {
             ...currentUser,
+            address:user_address,
             parent: parent_address,
           };
 
@@ -128,17 +149,18 @@ export const main = Reach.App(() => {
         return () => {
           const amt = (user.allowedToWithdraw * 30) / 100;
           const amount = returnTheGreater(balance(), amt);
-          confirm(amount);
           transfer(amount).to(user_address);
           //   We are adding the remaining 60% to the parent's balance
           registeredUser[parent.address] = {
-            ...parent,
-            allowedToWithdraw: parent.allowedToWithdraw + amount * 2,
-          };
-          registeredUser[user_address] = {...user, allowedToWithdraw: 0}
-        
-
-          const final = total - amount;
+              ...parent,
+              allowedToWithdraw: parent.allowedToWithdraw + amount * 2,
+            };
+            registeredUser[user_address] = { ...user, allowedToWithdraw: 0 };
+            
+            const final = total - amount;
+            const x = fromSome(registeredUser[user_address], deployerObj);
+            const y = fromSome(registeredUser[parent.address], deployerObj);
+            confirm([user,x]);
           return [keepGoing, howMany, final];
         };
       };
