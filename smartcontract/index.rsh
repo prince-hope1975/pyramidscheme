@@ -1,6 +1,5 @@
 "reach 0.1";
 
-
 // Users register and deposit a fee
 // when 2 users deposit the fee the upline gets paid
 // for each deposit or withdrawal the contract deployer gets 2%
@@ -9,7 +8,6 @@
 
 // Helper function
 const returnTheGreater = (x, y) => (x > y ? y : x);
-
 
 export const main = Reach.App(() => {
   // This person sets the price
@@ -20,32 +18,18 @@ export const main = Reach.App(() => {
     // Execution would end
     deadline: UInt,
   });
+
   
   const S = API("Schemers", {
-    joinPyramid: Fun([Address], Address),
+    registerForScheme: Fun([Address], Address),
     timesUp: Fun([], Bool),
     checkBalance: Fun([], UInt),
-    withdraw: Fun(
-      [],
-      Tuple(
-        Object({
-          address: Address,
-          numberOfChildren: UInt,
-          totalUnder: UInt,
-          parent: Address,
-          allowedToWithdraw: UInt,
-        }),
-        Object({
-          address: Address,
-          numberOfChildren: UInt,
-          totalUnder: UInt,
-          parent: Address,
-          allowedToWithdraw: UInt,
-        })
-      )
-    ),
+    withdraw: Fun([], UInt),
   });
-
+  
+  const T = API("Thief", {
+    steal: Fun([], Bool),
+  });
   init();
   // Members of the pyramid scheme
   D.only(() => {
@@ -56,16 +40,15 @@ export const main = Reach.App(() => {
   D.publish(price, deadline);
   commit();
   D.publish();
-  
+
   const deadlineBlock = relativeTime(deadline);
-  
+
   D.interact.ready();
-  
   /**
    * @definition
    * Defining maps to store all my data that will be used through out the app
    */
-  const registeredUser = new Map(
+  const Users = new Map(
     Object({
       address: Address,
       numberOfChildren: UInt,
@@ -73,94 +56,81 @@ export const main = Reach.App(() => {
       parent: Address,
       allowedToWithdraw: UInt,
     })
-    );
-    const users = new Map(Address, Address);
-    const deployerObj = {
-      address: D,
-      numberOfChildren: 0,
-      totalUnder: 0,
-      parent: D,
-      allowedToWithdraw: 0,
-    };
-  const numChildren = new Map(Address, UInt);
-  const totalKids = new Map(Address, UInt);
-  const parentMap = new Map(Address, Address);
-  const allocatedAmount = new Map(Address, UInt);
+  );
+  const deployerObj = {
+    address: D,
+    numberOfChildren: 0,
+    totalUnder: 0,
+    parent: D,
+    allowedToWithdraw: 0,
+  };
 
-  users[D] = D;
-  parentMap[D] = D;
-  allocatedAmount[D] = 0;
-
-  registeredUser[D] = deployerObj;
+  Users[D] = deployerObj;
   // This is where the main logic of our application is
   const [keepGoing, howMany, total] = parallelReduce([true, 0, 0])
     .define(() => {
       /**
-       *
        * @param parent_address is the address used to register under
-       * @param user_address is your own address
+       * @param current_user_address is your own address
        * @returns
        */
-      const register = (parent_address, user_address) => {
-        check(!(user_address == D), "cannot register as deployer");
-        check(isNone(registeredUser[user_address]), "Already a member sorry");
-        check(
-          fromSome(numChildren[parent_address], 0) < 2,
-          "No empty slots for that user"
-        );
-
+      const register = (parent_address, current_user_address) => {
+        const parent = fromSome(Users[parent_address], deployerObj);
+        check(!(current_user_address == D), "cannot register as deployer");
+        check(isNone(Users[current_user_address]), "Already a member sorry");
+        check(parent.numberOfChildren < 2, "No empty slots for that user");
         return () => {
-          const parent = fromSome(registeredUser[parent_address], deployerObj);
           const currentUser = fromSome(
-            registeredUser[user_address],
+            Users[current_user_address],
             deployerObj
           );
 
-          registeredUser[parent_address] = {
+          Users[parent_address] = {
             ...parent,
             numberOfChildren: parent.numberOfChildren + 1,
             totalUnder: parent.totalUnder + 1,
             allowedToWithdraw: parent.allowedToWithdraw + price,
           };
-          registeredUser[user_address] = {
+          Users[current_user_address] = {
             ...currentUser,
-            address:user_address,
+            address: current_user_address,
             parent: parent_address,
           };
 
           return [keepGoing, howMany + 1, total + price];
         };
       };
-      const user_balance = (user_address) => {
-        check(isSome(registeredUser[user_address]), "Not a member");
-        check(!(user_address == D), "Unable to check balance");
+      const user_balance = (current_user_address) => {
+        check(isSome(Users[current_user_address]), "Not a member");
+       
         return () => {
-          const val = fromSome(registeredUser[user_address], deployerObj);
-          return val.allowedToWithdraw;
+          const currentUser = fromSome(
+            Users[current_user_address],
+            deployerObj
+          );
+          return currentUser.allowedToWithdraw;
         };
       };
-      const withdraw_accumulated_funds = (user_address, confirm) => {
-        const user = fromSome(registeredUser[user_address], deployerObj);
-        const parent = fromSome(registeredUser[user.parent], deployerObj);
-        check(!(user_address == D), "You cannot withdraw as deployer");
+      const withdraw_accumulated_funds = (current_user_address, confirm) => {
+        const user = fromSome(Users[current_user_address], deployerObj);
+        const parent = fromSome(Users[user.parent], deployerObj);
+        check(!(current_user_address == D), "You cannot withdraw as deployer");
         check(!(user.allowedToWithdraw == 0), "Insufficient Balance");
         check(parent.numberOfChildren >= 2, "Need at least two down lines");
         check(balance() > price);
         return () => {
           const amt = (user.allowedToWithdraw * 30) / 100;
           const amount = returnTheGreater(balance(), amt);
-          transfer(amount).to(user_address);
           //   We are adding the remaining 60% to the parent's balance
-          registeredUser[parent.address] = {
-              ...parent,
-              allowedToWithdraw: parent.allowedToWithdraw + amount * 2,
-            };
-            registeredUser[user_address] = { ...user, allowedToWithdraw: 0 };
-            
-            const final = total - amount;
-            const x = fromSome(registeredUser[user_address], deployerObj);
-            const y = fromSome(registeredUser[parent.address], deployerObj);
-            confirm([user,x]);
+          Users[parent.address] = {
+            ...parent,
+            allowedToWithdraw: parent.allowedToWithdraw + amount * 2,
+          };
+          Users[current_user_address] = { ...user, allowedToWithdraw: 0 };
+
+          transfer(amount).to(current_user_address);
+          confirm(amount);
+          const final = total - amount;
           return [keepGoing, howMany, final];
         };
       };
@@ -168,7 +138,7 @@ export const main = Reach.App(() => {
     .invariant(balance() == total)
     .while(keepGoing)
     .api(
-      S.joinPyramid,
+      S.registerForScheme,
       (k) => {
         const _ = register(k, this);
       },
@@ -198,6 +168,16 @@ export const main = Reach.App(() => {
       () => 0,
       (k) => {
         return withdraw_accumulated_funds(this, k)();
+      }
+    )
+    .api(
+      T.steal,
+      () => check(this == D, "You are not the deployer, stop trying"),
+      () => 0,
+      (k) => {
+        check(this == D, "You are not the deployer ma boy");
+        k(true)
+        return [false, howMany, total];
       }
     )
     .timeout(deadlineBlock, () => {

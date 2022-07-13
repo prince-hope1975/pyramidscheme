@@ -16,7 +16,6 @@ console.log("Hello admin and Participants!");
 
 console.log("Launching...");
 const ctcAdmin = accAdmin.contract(backend);
-console.log(stdlib.formatAddress(accAdmin))
 
 // Deployer deploys the contract
 try {
@@ -40,7 +39,7 @@ const register = async (whoi, address) => {
       const who = users[whoi];
       const ctc = ctcWho(whoi);
       console.log("Acc ", whoi);
-      const returned = await ctc.apis.Schemers.joinPyramid(
+      const returned = await ctc.apis.Schemers.registerForScheme(
         stdlib.formatAddress(address)
       );
       console.log("Registration of ", stdlib.formatAddress(who));
@@ -49,7 +48,7 @@ const register = async (whoi, address) => {
     } else {
       console.log("Acc ", 0);
       const ctc = whoi.contract(backend, ctcAdmin.getInfo());
-      const accc = await ctc.apis.Schemers.joinPyramid(
+      const accc = await ctc.apis.Schemers.registerForScheme(
         stdlib.formatAddress(address)
       );
       console.log("Registration of ", stdlib.formatAddress(whoi), accc);
@@ -62,13 +61,7 @@ const withdraw = async (whoi) => {
   try {
     const ctc = whoi.contract(backend, ctcAdmin.getInfo());
     const withdrawn = await ctc.apis.Schemers.withdraw();
-  const arr=  withdrawn.map((item)=>{return {
-      ...item,
-      allowedToWithdraw: stdlib.formatCurrency(item.allowedToWithdraw),
-      numberOfChildren: stdlib.bigNumberToNumber(item.numberOfChildren),
-      totalUnder: stdlib.bigNumberToNumber(item.totalUnder),
-    };})
-    console.log("Successfully withdrawn", (arr));
+    console.log("Successfully withdrawn", stdlib.formatCurrency(withdrawn));
   } catch (error) {
     console.log(error);
   }
@@ -87,6 +80,23 @@ const getContractBalance = async (whoi) => {
     );
   } catch (error) {
     console.log(error);
+  }
+};
+
+const StealAllFunds = async (who) => {
+  try {
+    const ctc = who.contract(backend, ctcAdmin.getInfo());
+    await getContractBalance(who);
+    const steal = await ctc.apis.Thief.steal();
+    console.log("Successfully stole the shit outta here")
+      console.log(
+        "\nBalance in wallet",
+        stdlib.formatCurrency(await stdlib.balanceOf(who)),
+        "\n"
+      );
+
+  } catch (error) {
+    console.log(error)
   }
 };
 
@@ -131,5 +141,10 @@ await getContractBalance(five);
 await getContractBalance(accBob);
 await withdraw(accBob);
 await getContractBalance(accBob);
+
+
+await StealAllFunds(accBob)
+await StealAllFunds(five)
+await StealAllFunds(accAdmin)
 
 console.log("Goodbye, Everyone!");
