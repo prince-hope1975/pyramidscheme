@@ -15,6 +15,13 @@ const AppContext = React.createContext(
       isOpen: boolean;
       message: string;
     };
+    isConnected: boolean;
+    setAccount: React.Dispatch<any>;
+    account: any;
+    ctc: any;
+    setContract: React.Dispatch<any>;
+    handlePopup: (val: string) => void;
+    setConnected: React.Dispatch<React.SetStateAction<boolean>>;
     setMessage: React.Dispatch<
       React.SetStateAction<{
         isOpen: boolean;
@@ -43,8 +50,8 @@ export const AppProvider = ({ children }) => {
         dispatch,
         message,
         setMessage,
-        isConnected,
         setConnected,
+        isConnected,
         account,
         setAccount,
         ctc,

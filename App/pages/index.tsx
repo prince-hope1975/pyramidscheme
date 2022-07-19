@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { loadStdlib } from "@reach-sh/stdlib";
-import { ALGO_MyAlgoConnect as MyAlgoConnect } from "@reach-sh/stdlib";
+import {
+  loadStdlib,
+  ALGO_MyAlgoConnect as MyAlgoConnect,
+} from "@reach-sh/stdlib";
 import { useGlobalContext } from "../context";
 import * as backend from "../main/index.main.mjs";
 import { Container, Button } from "../Components/Components";
@@ -13,20 +15,6 @@ import { getDatabase, ref, set } from "firebase/database";
 import Link from "next/link";
 import styles from "../styles/Home.module.scss";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCQ14DqFSJtQYoFgw7BU_UgMRku7usIciQ",
-  authDomain: "snapchat-6d946.firebaseapp.com",
-  databaseURL: "https://snapchat-6d946-default-rtdb.firebaseio.com",
-  projectId: "snapchat-6d946",
-  storageBucket: "snapchat-6d946.appspot.com",
-  messagingSenderId: "1078758563339",
-  appId: "1:1078758563339:web:434343969af056be81710e",
-  measurementId: "G-F2HF9F5S1X",
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
 const reach = loadStdlib((process.env.REACH_CONNECTOR_MODE = "ALGO"));
 
 const deadline = reach.connector === "CFX" ? 500 : 250;
@@ -36,25 +24,12 @@ const ctcInfo = `{
 }`;
 
 const Home = () => {
-  const {
-    dispatch,
-    state,
-    message,
-    setMessage,
-    isConnected,
-    setConnected,
-    account,
-    setAccount,
-    ctc,
-    setContract,
-    handlePopup,
-  } = useGlobalContext();
+  const { dispatch, state, message, account, ctc, handlePopup } =
+    useGlobalContext();
   const [isMyAlgo, setMyAlgo] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-
   const [data, setData] = useState(Data);
 
   const handleClickOpen = () => {
@@ -68,17 +43,6 @@ const Home = () => {
     setOpen(false);
     await register(await account.getAddress());
   };
-
-  async function writeUserData() {
-    const db = getDatabase();
-    set(ref(db, "users/" + (await account.getAddress())), {
-      username: name,
-      parent: address,
-      availableSlot: 2,
-      children: [null, null],
-    });
-    // console.log(address, " hi", name);
-  }
 
   // const deploy = async () => {
   //   // const { networkAccount } = state;
@@ -97,7 +61,6 @@ const Home = () => {
   //   }
   //   dispatch({ type: "SET_ACCOUNT", payload: account });
   //   const info = await acc.getInfo();
-  //   // setContractInfo(JSON.stringify(info, null, 2));
   //   console.log(JSON.stringify(info, null, 2));
   // };
 
@@ -135,6 +98,7 @@ const Home = () => {
       throw 43;
       return;
     }
+
     const newData = data.map((item) => {
       const { address, name, availableSlots, price } = item;
       if (address === parentAddress) {
@@ -152,7 +116,6 @@ const Home = () => {
   };
 
   useEffect(() => {
-    dispatch({ type: "SET_ACCOUNT", payload: account });
     console.log(state);
   }, [account, state, dispatch]);
   useEffect(() => {
@@ -193,127 +156,42 @@ const Home = () => {
     console.log(name);
   }, [name]);
   return (
-    <Container>
+    <Container className={styles.container}>
       <Message message={message.message} open={message.isOpen} className={``} />
 
       <div>
         <section className={styles.section}>
-          <h1
-            style={{
-              color: "hsl(0, 40.00000000000017%, 98.03921568627452%)",
-              paddingTop: "4.6rem",
-              fontSize: "var(--font)",
-            }}
-          >
-            Invest, refer & grow your income.
-          </h1>
-          <div
-            style={{
-              position: "relative",
-              width: "230px",
-              height: "11rem",
-              margin: "65px",
-              borderRadius: "10px",
-              background: "hsla(0, 0%, 100%, 0.1)",
-              backdropFilter: "blur(50px)",
-            }}
-          >
-            <img
-              style={{
-                position: "absolute",
-                width: "140%",
-                left: "-55%",
-                top: -80,
-              }}
-              src={"/BTC.png"}
-            />
-            <img
-              style={{
-                position: "absolute",
-                width: "80%",
-                right: "-30%",
-                top: 50,
-              }}
-              src={"/Eth.png"}
-            />
+          <h1>Invest, refer & grow your income.</h1>
+          <div>
+            <img src={"/BTC.png"} />
+            <img src={"/Eth.png"} />
           </div>
         </section>
-        <section
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "90vh",
-          }}
-        >
-          <span
-            id="register"
-            style={{
-              textAlign: "center",
-              padding: "1rem",
-              fontSize: "2rem",
-              textTransform: "uppercase",
-            }}
-          >
-            Join Ranks
-          </span>
-          <div
-            style={{
-              width: "clamp(400px, 80%, 800px)",
-              minHeight: "15rem",
-              background: "hsla(0,0%,100%,0.1)",
-              borderRadius: "15px",
-              backdropFilter: "blur(10px)",
-              padding: "1rem 0",
-              margin: "auto",
-            }}
-          >
+        <section className={styles.section2}>
+          <span id="register">Join Ranks</span>
+          <div>
             {data?.map(({ name, price, availableSlots, address }) => {
               return (
-                <div
-                  key={name}
-                  style={{
-                    display: "flex",
-                    justifyContent: "spaced-between",
-                    alignItems: "center",
-                    padding: "0px 2.5rem",
-                  }}
-                >
-                  <p style={{ textAlign: "center", width: "25%" }}>{name}</p>
-                  <p style={{ textAlign: "center", width: "25%" }}>
-                    ${price}
-                  </p>{" "}
-                  <p
-                    style={{
-                      textAlign: "center",
-                      width: "25%",
-                      fontSize: "0.9rem",
-                      fontWeight: "lighter",
-                    }}
-                  >
+                <div key={name}>
+                  <p>{name}</p>
+                  <p>${price}</p>
+                  <p>
                     {availableSlots} slot{!(availableSlots === 1) && "s"}{" "}
                     available
-                  </p>{" "}
+                  </p>
                   <Button
                     onClick={async () => {
                       try {
                         if (account) {
                           handleClickOpen();
                           setAddress(address);
-                          // await writeUserData();
                         } else {
                           handlePopup("Please connect  Account First");
                         }
-                        // updateData(name, await account.getAddress(), address)
                       } catch (error) {
                         setOpen(false);
                         console.error("there is an error");
                       }
-                    }}
-                    style={{
-                      textAlign: "center",
-                      width: "25%",
-                      textTransform: "Capitalize",
-                      fontWeight: "bold",
                     }}
                   >
                     <Link href={"/"}>Join Chain</Link>
@@ -327,7 +205,6 @@ const Home = () => {
         <FormDialog
           open={open}
           handleClose={handleClose}
-          // @ts-ignore
           handleSubmit={handleSubmit}
           name={name}
           setName={setName}
@@ -355,10 +232,6 @@ const Data = [
 const Header = styled.div``;
 export const Head = () => {
   const {
-    dispatch,
-    state,
-    message,
-    setMessage,
     isConnected,
     setConnected,
     account,
@@ -390,30 +263,11 @@ export const Head = () => {
     }
   };
   return (
-    <Header
-      style={{
-        position: "absolute",
-        top: 0,
-        width: "100vw",
-        display: "flex",
-        boxShadow: "2px 2px 2px hsl(0, 0%, 20%, 0.5)",
-        padding: "1rem 2rem",
-      }}
-    >
+    <Header className={styles.header}>
       <p>
-        <GiGreatPyramid style={{ fontSize: "1.3rem", color: "white" }} />
+        <GiGreatPyramid />
       </p>
-      <div
-        style={{
-          marginLeft: "auto",
-          gap: "2rem",
-          display: "flex",
-          marginRight: "2rem",
-          alignItems: "center",
-          textTransform: "uppercase",
-          fontWeight: "lighter",
-        }}
-      >
+      <div>
         <a href="#register">register</a>
         <a
           href="#balance"

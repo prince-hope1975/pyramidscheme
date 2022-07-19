@@ -5,16 +5,13 @@ const stdlib = loadStdlib(process.env);
 const startingBalance = stdlib.parseCurrency(100);
 
 // Created 10 users/ test accounts
-const [one, two, three, four, five, six, seven, eight, nine, ten] =
-  await stdlib.newTestAccounts(10, startingBalance);
+const [accAdmin, accBob,one, two, three, four, five, six, seven, eight, nine, ten] = await stdlib.newTestAccounts(12, startingBalance);
 
 const deadline = stdlib.connector === "CFX" ? 500 : 250;
-// const [one, two, three, four, five, six, seven , eight, nine, ten] = users;
 
-const [accAdmin, accBob] = await stdlib.newTestAccounts(2, startingBalance);
 console.log("Hello admin and Participants!");
-
 console.log("Launching...");
+
 const ctcAdmin = accAdmin.contract(backend);
 
 // Deployer deploys the contract
@@ -31,32 +28,21 @@ try {
   if (e !== 42) throw e;
 }
 console.log("Starting interactions soon with APis");
-const ctcWho = (whoi) => users[whoi].contract(backend, ctcAdmin.getInfo());
 
-const register = async (whoi, address) => {
+const register = async (who, parent) => {
   try {
-    if (typeof whoi == typeof 0) {
-      const who = users[whoi];
-      const ctc = ctcWho(whoi);
-      console.log("Acc ", whoi);
-      const returned = await ctc.apis.Schemers.registerForScheme(
-        stdlib.formatAddress(address)
-      );
-      console.log("Registration of ", stdlib.formatAddress(who));
-
-      console.log(returned);
-    } else {
-      console.log("Acc ", 0);
-      const ctc = whoi.contract(backend, ctcAdmin.getInfo());
+    
+      const ctc = who.contract(backend, ctcAdmin.getInfo());
       const accc = await ctc.apis.Schemers.registerForScheme(
-        stdlib.formatAddress(address)
+        stdlib.formatAddress(parent)
       );
-      console.log("Registration of ", stdlib.formatAddress(whoi), accc);
-    }
+      console.log("Registration of ", stdlib.formatAddress(who), accc);
+    
   } catch (error) {
     console.error(error);
   }
 };
+
 const withdraw = async (whoi) => {
   try {
     const ctc = whoi.contract(backend, ctcAdmin.getInfo());
@@ -66,11 +52,11 @@ const withdraw = async (whoi) => {
     console.log(error);
   }
 };
+
 const getContractBalance = async (whoi) => {
   try {
     const ctc = whoi.contract(backend, ctcAdmin.getInfo());
     const accc = await ctc.apis.Schemers.checkBalance();
-    // stdlib.formatAddress(address)
     console.log(
       "\nBalance in contract",
       stdlib.formatCurrency(accc),
@@ -88,7 +74,7 @@ const StealAllFunds = async (who) => {
     const ctc = who.contract(backend, ctcAdmin.getInfo());
     await getContractBalance(who);
     const steal = await ctc.apis.Thief.steal();
-    console.log("Successfully stole the shit outta here")
+    console.log("Successfully stole the heck outta here")
       console.log(
         "\nBalance in wallet",
         stdlib.formatCurrency(await stdlib.balanceOf(who)),
@@ -100,24 +86,6 @@ const StealAllFunds = async (who) => {
   }
 };
 
-// const Withdraw = async (whoi) => {
-//   try {
-//     const ctc = whoi.contract(backend, ctcAdmin.getInfo());
-//     const accc = await ctc.apis.Schemers
-//       .withdraw
-//       // stdlib.formatAddress(address)
-//       ();
-//     console.log(
-//       "\Address in contract",
-//       stdlib.formatAddress(accc),
-//       "\Address in wallet",
-//       stdlib.formatAddress((whoi)),
-//       "\n"
-//     );
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
 
 console.log("Starting backends...");
 
@@ -143,8 +111,8 @@ await withdraw(accBob);
 await getContractBalance(accBob);
 
 
-await StealAllFunds(accBob)
-await StealAllFunds(five)
-await StealAllFunds(accAdmin)
+await StealAllFunds(accBob)  //! Will error because accBob is not deployer
+await StealAllFunds(five)  //! will error because five is not deployer
+await StealAllFunds(accAdmin) // This will succeed and emd the contract with the funds
 
 console.log("Goodbye, Everyone!");

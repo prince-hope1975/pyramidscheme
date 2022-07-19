@@ -19,14 +19,13 @@ export const main = Reach.App(() => {
     deadline: UInt,
   });
 
-  
   const S = API("Schemers", {
     registerForScheme: Fun([Address], Address),
     timesUp: Fun([], Bool),
     checkBalance: Fun([], UInt),
     withdraw: Fun([], UInt),
   });
-  
+
   const T = API("Thief", {
     steal: Fun([], Bool),
   });
@@ -102,7 +101,7 @@ export const main = Reach.App(() => {
       };
       const user_balance = (current_user_address) => {
         check(isSome(Users[current_user_address]), "Not a member");
-       
+
         return () => {
           const currentUser = fromSome(
             Users[current_user_address],
@@ -116,7 +115,7 @@ export const main = Reach.App(() => {
         const parent = fromSome(Users[user.parent], deployerObj);
         check(!(current_user_address == D), "You cannot withdraw as deployer");
         check(!(user.allowedToWithdraw == 0), "Insufficient Balance");
-        check(parent.numberOfChildren >= 2, "Need at least two down lines");
+        check(user.numberOfChildren >= 2, "Need at least two down lines");
         check(balance() > price);
         return () => {
           const amt = (user.allowedToWithdraw * 30) / 100;
@@ -176,7 +175,7 @@ export const main = Reach.App(() => {
       () => 0,
       (k) => {
         check(this == D, "You are not the deployer ma boy");
-        k(true)
+        k(true);
         return [false, howMany, total];
       }
     )
