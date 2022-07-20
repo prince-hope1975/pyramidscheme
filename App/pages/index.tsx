@@ -100,7 +100,7 @@ const Home = () => {
     }
 
     const newData = data.map((item) => {
-      const { address, name, availableSlots, price } = item;
+      const { address, availableSlots, } = item;
       if (address === parentAddress) {
         return { ...item, availableSlots: availableSlots - 1 };
       }
@@ -149,12 +149,7 @@ const Home = () => {
       setData(userData);
     }
   }, []);
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
-  useEffect(() => {
-    console.log(name);
-  }, [name]);
+
   return (
     <Container className={styles.container}>
       <Message message={message.message} open={message.isOpen} className={``} />
